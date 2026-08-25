@@ -4,8 +4,8 @@ const GRID = { COLS: 28, ROWS: 20, CELL: 32 };
 
 function snakeCm(snake) {
   const n = (snake && snake.length) || 0;
-  if (n <= 2) return 0.5;
-  return 0.5 + (n - 2);
+  if (n <= 1) return 0;
+  return Math.round((n - 1) * 5) / 10;
 }
 
 /* ---- POINTS ----
@@ -18,6 +18,7 @@ const PTS = {
   capote: 15,
   rival: 150,
 };
+const HEART_EVERY = 7;
 
 /* ---- OBJETS DE CROISSANCE ----
    Le snack du niveau (savon, cocktail…) reste le plus courant.
@@ -56,10 +57,21 @@ function wallV(x, y1, y2, wall) {
 }
 
 /* ---- MÉCHANTES PUCHITAS ----
-   Même personnage que l’alliée, mais grognon. Ce sont les obstacles
-   qui tuent (statiques ou en patrouille). variant 0/1/2 = teinte. */
+   Toutes retirent 0.5 cm. À 0 cm, le joueur meurt.
+   variant 0/1/2 = teinte (Furax / Jalouse / Toxique). */
 const VIRUS_NAMES = ['Puchita Furax', 'Puchita Jalouse', 'Puchita Toxique'];
 const virus = (x, y, variant, move) => ({ x, y, virus: variant % 3, move });
+const COMBAT_PACKS = {
+  ammo: { emoji: '💦', name: 'Tir de sperme', shots: 2 },
+  shield: { emoji: '🛡️', name: 'Capote de protection' },
+  star: { emoji: '🌟', name: 'Invincible', dur: 5500 },
+  antigrav: { emoji: '🌀', name: 'Bouclier anti-gravité' },
+  puchita: { emoji: '💕', name: 'Invitation de Puchita' },
+  pump: { emoji: '💪', name: 'Pompe de départ', grow: 3 },
+};
+const KIT_TO_PACK = {
+  sperm: 'ammo', capote: 'shield', antigrav: 'antigrav', puchita: 'puchita', pump: 'pump',
+};
 
 /* ---- NIVEAUX ----
    Les premiers sont plus « Snake classique » (couloirs, murs, plus d’ennemis).
@@ -67,126 +79,212 @@ const virus = (x, y, variant, move) => ({ x, y, virus: variant % 3, move });
 const LEVELS = [
   {
     id: 1, name: 'Salle de Bain', emoji: '🛁', food: '🧼',
-    music: 'bathroom', speed: 5.5, goal: 150,
+    music: 'bathroom', speed: 4.5, goal: 150,
     bg: ['#d7f1f8', '#c5e6f0'], deco: 'bathroom',
+    soul: 'Vapeur furtive',
+    mood: 'Carrelage froid, rideau ouvert, quelqu’un chante faux.',
+    aura: '#7ecad8', vig: 'rgba(28, 92, 112, .44)',
     obstacles: [
       ...wallH(8, 12, 6, 'tile'),
       ...wallH(16, 20, 6, 'tile'),
       ...wallV(14, 10, 13, 'tile'),
+      ...wallH(2, 5, 8, 'tile'),
+      ...wallV(23, 7, 11, 'tile'),
+      ...wallH(22, 25, 4, 'tile'),
       { x: 20, y: 15, e: '🦆' }, { x: 21, y: 15, e: '🦆' },
+      { x: 3, y: 3, e: '🚿' }, { x: 12, y: 3, e: '🧴' },
+      { x: 25, y: 17, e: '🪥' },
+      { x: 6, y: 2, e: '🧼' }, { x: 1, y: 12, e: '🧻' },
       virus(7, 3, 0), virus(20, 3, 1), virus(9, 10, 2), virus(18, 12, 0),
+      virus(3, 11, 1), virus(16, 9, 2), virus(6, 7, 2), virus(21, 14, 1),
+      virus(25, 8, 0, { axis: 'y', min: 3, max: 12, dir: 1, every: 5 }),
+      virus(11, 14, 1, { axis: 'x', min: 6, max: 13, dir: 1, every: 5 }),
     ],
     rivals: 1, rivalSpeed: 1.48,
   },
   {
     id: 2, name: 'Plage', emoji: '🏖️', food: '🍹',
-    music: 'beach', speed: 6.4, goal: 280,
+    music: 'beach', speed: 5.2, goal: 280,
     bg: ['#ffe7b0', '#ffd789'], deco: 'beach',
+    soul: 'Marée voyeuse',
+    mood: 'Sel, crème solaire, regards trop bronzés.',
+    aura: '#f0c45a', vig: 'rgba(180, 90, 20, .32)',
     obstacles: [
       ...wallV(5, 2, 5, 'wood'),
-      ...wallV(22, 13, 16, 'wood'),
+      ...wallV(22, 13, 15, 'wood'),
       ...wallH(10, 13, 9, 'rock'),
-      { x: 8, y: 16, e: '⛱️' },
-      virus(11, 4, 0), virus(16, 14, 2), virus(7, 11, 1),
+      ...wallH(2, 4, 12, 'rock'),
+      ...wallH(24, 26, 7, 'rock'),
+      ...wallH(15, 18, 12, 'rock'),
+      { x: 8, y: 17, e: '⛱️' }, { x: 17, y: 4, e: '🌴' },
+      { x: 3, y: 17, e: '🐚' },
+      { x: 25, y: 17, e: '🦀' }, { x: 1, y: 8, e: '🩴' },
+      { x: 26, y: 3, e: '🕶️' },
+      virus(11, 4, 0), virus(16, 14, 2), virus(7, 11, 1), virus(3, 6, 0),
+      virus(21, 8, 1), virus(9, 7, 2),
       virus(18, 3, 1, { axis: 'x', min: 14, max: 21, dir: 1, every: 5 }),
+      virus(24, 10, 2, { axis: 'y', min: 4, max: 12, dir: -1, every: 4 }),
+      virus(13, 15, 0, { axis: 'x', min: 9, max: 18, dir: 1, every: 5 }),
     ],
     rivals: 2, rivalSpeed: 1.32,
   },
   {
     id: 3, name: 'Boîte de Nuit', emoji: '🪩', food: '🍸',
-    music: 'club', speed: 7.4, goal: 400,
+    music: 'club', speed: 6.1, goal: 400,
     bg: ['#1c1438', '#120c28'], deco: 'club',
+    soul: 'Nuit électrique',
+    mood: 'Basses trop fort. Personne n’écoute. Tout le monde juge.',
+    aura: '#ff6fa5', vig: 'rgba(40, 8, 70, .55)',
     obstacles: [
       ...wallH(11, 16, 7, 'neon'),
       ...wallH(11, 16, 12, 'neon'),
       ...wallV(8, 8, 11, 'neon'),
       ...wallV(19, 8, 11, 'neon'),
-      virus(4, 4, 0), virus(23, 15, 1), virus(14, 3, 2),
+      ...wallH(2, 4, 5, 'neon'),
+      ...wallH(23, 25, 14, 'neon'),
+      ...wallV(2, 10, 13, 'neon'),
+      { x: 2, y: 2, e: '🔊' }, { x: 25, y: 2, e: '🔊' },
+      { x: 14, y: 17, e: '🕶️' },
+      { x: 26, y: 8, e: '🎤' }, { x: 1, y: 17, e: '🍸' },
+      virus(4, 4, 0), virus(23, 15, 1), virus(14, 3, 2), virus(9, 15, 1),
+      virus(6, 8, 2), virus(21, 13, 0),
       virus(23, 3, 2, { axis: 'y', min: 2, max: 7, dir: 1, every: 4 }),
-      virus(4, 15, 0, { axis: 'y', min: 12, max: 17, dir: -1, every: 4 }),
+      virus(2, 14, 0, { axis: 'y', min: 10, max: 15, dir: -1, every: 4 }),
+      virus(16, 9, 0, { axis: 'x', min: 10, max: 18, dir: 1, every: 4 }),
     ],
     rivals: 3, rivalSpeed: 1.18,
   },
   {
     id: 4, name: 'Donjon Absurde', emoji: '🏰', food: '🍗',
-    music: 'dungeon', speed: 8.3, goal: 420,
+    music: 'dungeon', speed: 6.8, goal: 420,
     bg: ['#3f3a4c', '#2e2a38'], deco: 'dungeon',
+    soul: 'Pierre honteuse',
+    mood: 'Humide, ancien, un peu honteux. Les torches te regardent.',
+    aura: '#d07a4a', vig: 'rgba(12, 6, 18, .58)',
     obstacles: [
       ...wallH(3, 10, 6, 'brick'), ...wallH(17, 24, 6, 'brick'),
       ...wallH(3, 10, 13, 'brick'), ...wallH(17, 24, 13, 'brick'),
-      { x: 13, y: 3, e: '🦴' }, { x: 14, y: 16, e: '🦴' },
+      ...wallV(14, 2, 4, 'brick'),
+      ...wallV(13, 17, 18, 'brick'),
+      ...wallV(2, 2, 4, 'brick'),
+      { x: 13, y: 3, e: '🦴' }, { x: 14, y: 17, e: '🦴' },
+      { x: 2, y: 9, e: '🕯️' }, { x: 25, y: 9, e: '🐀' },
+      { x: 26, y: 2, e: '🛡️' },
       virus(6, 9, 1, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
       virus(21, 9, 2, { axis: 'x', min: 16, max: 24, dir: -1, every: 4 }),
       virus(13, 9, 0, { axis: 'y', min: 8, max: 12, dir: 1, every: 5 }),
-      virus(3, 16, 1), virus(24, 3, 0),
+      virus(2, 17, 1), virus(24, 3, 0), virus(8, 3, 2), virus(11, 11, 0),
+      virus(19, 17, 0, { axis: 'x', min: 16, max: 24, dir: 1, every: 5 }),
+      virus(25, 14, 2, { axis: 'y', min: 10, max: 15, dir: 1, every: 5 }),
     ],
     rivals: 4, rivalSpeed: 1.08,
   },
   {
     id: 5, name: 'Espace', emoji: '🚀', food: '⭐',
-    music: 'space', speed: 9.3, goal: 550,
+    music: 'space', speed: 7.6, goal: 550,
     bg: ['#0b0824', '#050314'], deco: 'space',
+    soul: 'Silence sidéral',
+    mood: 'Vide. Personne ne t’entend crier. Personne ne t’entend rire.',
+    aura: '#8a6cff', vig: 'rgba(4, 2, 24, .62)',
     obstacles: [
       ...wallH(9, 11, 8, 'asteroid'), ...wallH(16, 18, 8, 'asteroid'),
+      ...wallV(4, 5, 7, 'asteroid'), ...wallH(22, 24, 12, 'asteroid'),
+      ...wallH(1, 3, 10, 'asteroid'),
       { x: 6, y: 4, e: '🪐' }, { x: 21, y: 15, e: '🪐' },
-      { x: 13, y: 5, e: '🛸' },
+      { x: 13, y: 5, e: '🛸' }, { x: 25, y: 3, e: '⭐' },
+      { x: 2, y: 2, e: '🌙' },
       virus(14, 13, 0, { axis: 'x', min: 8, max: 20, dir: 1, every: 3 }),
-      virus(8, 12, 1, { axis: 'y', min: 11, max: 17, dir: 1, every: 4 }),
-      virus(20, 12, 2, { axis: 'y', min: 11, max: 17, dir: -1, every: 4 }),
-      virus(5, 8, 1), virus(22, 6, 0),
+      virus(8, 12, 1, { axis: 'y', min: 11, max: 15, dir: 1, every: 4 }),
+      virus(20, 12, 2, { axis: 'y', min: 11, max: 15, dir: -1, every: 4 }),
+      virus(5, 8, 1), virus(22, 6, 0), virus(3, 14, 2), virus(11, 3, 0),
+      virus(17, 3, 1, { axis: 'x', min: 12, max: 22, dir: -1, every: 4 }),
+      virus(26, 9, 2, { axis: 'y', min: 5, max: 14, dir: 1, every: 4 }),
     ],
     rivals: 5, rivalSpeed: 1.00,
   },
   {
     id: 6, name: 'Cuisine', emoji: '🍳', food: '🥐',
-    music: 'kitchen', speed: 8.8, goal: 620,
+    music: 'kitchen', speed: 7.2, goal: 620,
     bg: ['#f3d9a4', '#e8c078'], deco: 'kitchen',
+    soul: 'Fournaise grasse',
+    mood: 'Huile chaude, couteaux, chef en furie. Ça sent le beurre et la vengeance.',
+    aura: '#e8a040', vig: 'rgba(90, 40, 8, .40)',
     obstacles: [
       ...wallH(6, 11, 6, 'wood'),
       ...wallH(16, 21, 12, 'wood'),
       ...wallV(13, 3, 5, 'wood'),
-      { x: 8, y: 5, e: '🍳' }, { x: 19, y: 11, e: '🥘' }, { x: 4, y: 10, e: '🥖' },
-      virus(10, 3, 0), virus(20, 4, 1), virus(7, 14, 2),
+      ...wallH(2, 4, 12, 'wood'),
+      ...wallV(24, 3, 6, 'wood'),
+      ...wallH(8, 10, 14, 'wood'),
+      { x: 8, y: 5, e: '🍳' }, { x: 19, y: 11, e: '🥘' },
+      { x: 4, y: 10, e: '🥖' },
+      { x: 22, y: 4, e: '🔪' }, { x: 15, y: 17, e: '🧄' },
+      { x: 1, y: 3, e: '🧂' },
+      virus(10, 3, 0), virus(20, 4, 1), virus(7, 14, 2), virus(18, 15, 0),
+      virus(3, 7, 1), virus(14, 10, 2),
       virus(16, 8, 1, { axis: 'x', min: 12, max: 22, dir: 1, every: 4 }),
       virus(5, 8, 0, { axis: 'y', min: 3, max: 12, dir: 1, every: 5 }),
+      virus(22, 10, 2, { axis: 'y', min: 7, max: 14, dir: -1, every: 4 }),
     ],
     rivals: 6, rivalSpeed: 1.02,
   },
   {
     id: 7, name: 'Sauna', emoji: '🧖', food: '🧴',
-    music: 'sauna', speed: 9.5, goal: 720,
+    music: 'sauna', speed: 7.8, goal: 720,
     bg: ['#c98a58', '#8a4e2a'], deco: 'sauna',
+    soul: 'Chaleur collante',
+    mood: 'Trop chaud. La serviette glisse. Personne ne parle.',
+    aura: '#e07038', vig: 'rgba(80, 20, 4, .48)',
     obstacles: [
       ...wallH(3, 9, 5, 'wood'),
       ...wallH(18, 24, 14, 'wood'),
       ...wallV(13, 8, 12, 'wood'),
-      { x: 4, y: 4, e: '🪵' }, { x: 23, y: 3, e: '🔥' },
-      virus(8, 9, 1), virus(20, 6, 2), virus(11, 16, 0),
+      ...wallH(15, 17, 3, 'wood'),
+      ...wallV(8, 14, 15, 'wood'),
+      ...wallH(1, 3, 9, 'wood'),
+      { x: 4, y: 4, e: '🪨' }, { x: 23, y: 3, e: '🔥' },
+      { x: 16, y: 17, e: '🧴' },
+      { x: 26, y: 8, e: '💧' },
+      virus(8, 9, 1), virus(20, 6, 2), virus(11, 14, 0), virus(3, 10, 1),
+      virus(25, 12, 0), virus(15, 6, 2),
       virus(6, 12, 0, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
       virus(21, 9, 2, { axis: 'y', min: 4, max: 13, dir: -1, every: 4 }),
+      virus(16, 8, 1, { axis: 'x', min: 14, max: 22, dir: 1, every: 5 }),
     ],
     rivals: 6, rivalSpeed: 0.96,
   },
   {
     id: 8, name: 'CHAOS FINAL', emoji: '🌪️', food: '🎁',
-    music: 'chaos', speed: 10.4, goal: 800,
+    music: 'chaos', speed: 8.5, goal: 800,
     bg: ['#3d0a3d', '#1f051f'], deco: 'chaos',
+    soul: 'Glitch lubrique',
+    mood: 'Rien n’est vrai. Tout pique. Le sol ment.',
+    aura: '#c44cff', vig: 'rgba(40, 0, 40, .55)',
     obstacles: [
       ...wallH(12, 15, 4, 'glitch'),
       ...wallH(12, 15, 15, 'glitch'),
-      virus(5, 4, 0), virus(22, 15, 1), virus(14, 17, 2),
+      ...wallV(6, 8, 10, 'glitch'),
+      ...wallV(21, 8, 10, 'glitch'),
+      ...wallH(1, 3, 5, 'glitch'),
+      { x: 2, y: 2, e: '👾' }, { x: 25, y: 17, e: '💣' },
+      virus(5, 4, 0), virus(22, 15, 1), virus(14, 17, 2), virus(3, 12, 1),
+      virus(26, 7, 0), virus(8, 14, 2),
       virus(9, 8, 2, { axis: 'x', min: 6, max: 21, dir: 1, every: 3 }),
       virus(18, 12, 0, { axis: 'x', min: 6, max: 21, dir: -1, every: 3 }),
       virus(14, 10, 1, { axis: 'y', min: 5, max: 14, dir: 1, every: 4 }),
-      virus(5, 15, 2, { axis: 'y', min: 6, max: 17, dir: -1, every: 3 }),
+      virus(2, 14, 2, { axis: 'y', min: 8, max: 15, dir: -1, every: 3 }),
       virus(22, 4, 0, { axis: 'y', min: 2, max: 13, dir: 1, every: 3 }),
+      virus(10, 3, 1, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
     ],
     rivals: 6, rivalSpeed: 0.88,
   },
   {
     id: 9, name: 'Le Grand Corps', emoji: '💋', food: '💋',
-    music: 'body', speed: 10.0, goal: 920,
+    music: 'body', speed: 8.2, goal: 920,
     bg: ['#f3c4b0', '#e8a090'], deco: 'body',
+    soul: 'Battement intime',
+    mood: 'Peau chaude. Elle respire encore. Tu es trop petit.',
+    aura: '#ff7aa8', vig: 'rgba(90, 20, 40, .42)',
     obstacles: [
       ...wallH(6, 10, 3, 'flesh'),
       ...wallH(16, 20, 3, 'flesh'),
@@ -200,11 +298,15 @@ const LEVELS = [
       ...wallV(22, 8, 11, 'flesh'),
       ...wallH(4, 8, 13, 'flesh'),
       ...wallH(19, 23, 13, 'flesh'),
-      { x: 14, y: 9, e: '🩷' }, { x: 3, y: 4, e: '🌹' }, { x: 24, y: 16, e: '🎀' },
-      virus(12, 4, 0), virus(21, 4, 1), virus(14, 12, 2),
+      { x: 14, y: 9, e: '❤️' }, { x: 3, y: 4, e: '🌹' },
+      { x: 24, y: 17, e: '🎀' },
+      { x: 1, y: 12, e: '💕' }, { x: 26, y: 5, e: '💋' },
+      virus(12, 4, 0), virus(21, 4, 1), virus(14, 12, 2), virus(3, 8, 0),
+      virus(25, 14, 1), virus(9, 14, 2),
       virus(7, 10, 1, { axis: 'y', min: 8, max: 12, dir: 1, every: 5 }),
       virus(20, 10, 0, { axis: 'y', min: 8, max: 12, dir: -1, every: 5 }),
       virus(11, 17, 2, { axis: 'x', min: 8, max: 19, dir: 1, every: 4 }),
+      virus(16, 15, 1, { axis: 'x', min: 12, max: 21, dir: -1, every: 5 }),
     ],
     rivals: 6, rivalSpeed: 0.92,
   },
@@ -354,15 +456,15 @@ const SKINS = [
 /* ---- BOUTIQUE : se débloque en ramassant des objets en jeu ---- */
 const SHOP_ITEMS = [
   { id: 'capote', name: 'Capote de protection', emoji: '🛡️', cost: 5, unlockEaten: 4,
-    desc: 'Tu commences capoté, et au duel elle encaisse un coup du boss.' },
+    desc: 'Pop sur la map. Ramasse-la. Si tu ne te fais pas toucher, tu la gardes au niveau suivant.' },
   { id: 'sperm', name: 'Tir de sperme', emoji: '💦', cost: 7, unlockEaten: 9,
-    desc: '3 tirs (Espace, clic ou bouton). Ça perce les virus et les gros rivaux.' },
+    desc: 'Pop sur la map. 3 tirs (Espace). Les tirs non utilisés suivent d’un niveau à l’autre.' },
   { id: 'antigrav', name: 'Bouclier anti-gravité', emoji: '🌀', cost: 6, unlockEaten: 15,
-    desc: 'Les murs, tu les traverses : tu réapparais de l’autre côté.' },
+    desc: 'Pop sur la map. Une fois ramassé, tu le gardes tant que tu vis.' },
   { id: 'pump', name: 'Pompe de départ', emoji: '💪', cost: 8, unlockEaten: 22,
-    desc: 'Tu commences déjà 3 cm plus long. Moins minus, plus menaçant.' },
+    desc: 'Pop sur la map. +1,5 cm quand tu la ramasses.' },
   { id: 'puchita', name: 'Invitation de Puchita', emoji: '💕', cost: 9, unlockEaten: 30,
-    desc: 'Un bouton 💕 pour l’appeler. Elle fait hello boys, puis elle descend un pénis méchant.' },
+    desc: 'Pop sur la map. Le bouton 💕 reste tant que tu ne l’appelles pas.' },
 ];
 
 /* ---- SAUVEGARDE (localStorage) ---- */
@@ -409,16 +511,11 @@ const Save = {
     this.write();
     return true;
   },
-  consumeKit() {
-    const used = {};
-    for (const item of SHOP_ITEMS) {
-      if ((this.data.kit[item.id] || 0) > 0) {
-        this.data.kit[item.id]--;
-        used[item.id] = true;
-      }
-    }
+  consumeOne(id) {
+    if ((this.data.kit[id] || 0) <= 0) return false;
+    this.data.kit[id]--;
     this.write();
-    return used;
+    return true;
   },
   addScore(score) {
     const newlyUnlocked = [];

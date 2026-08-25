@@ -13,13 +13,38 @@ html, body {
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.14), transparent 55%),
-    radial-gradient(900px 600px at 90% 80%, rgba(255,120,180,.18), transparent 50%),
-    linear-gradient(160deg, #3b2d7a 0%, #6b3fa8 42%, #c44d8c 100%);
-  font-family: "Segoe UI", "Trebuchet MS", "Nunito", sans-serif;
+    radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.18), transparent 55%),
+    radial-gradient(900px 600px at 90% 80%, rgba(255,120,180,.22), transparent 50%),
+    radial-gradient(700px 500px at 50% 110%, rgba(255, 210, 80, .16), transparent 45%),
+    linear-gradient(160deg, #2a1b5c 0%, #6b3fa8 42%, #c44d8c 100%);
+  font-family: "Fredoka", "Segoe UI", "Trebuchet MS", sans-serif;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+body::before, body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(8px);
+}
+body::before {
+  width: 42vw; height: 42vw;
+  left: -12vw; top: -10vh;
+  background: radial-gradient(circle, rgba(255, 130, 200, .35), transparent 68%);
+  animation: blob-drift 11s ease-in-out infinite alternate;
+}
+body::after {
+  width: 36vw; height: 36vw;
+  right: -10vw; bottom: -12vh;
+  background: radial-gradient(circle, rgba(255, 210, 90, .28), transparent 68%);
+  animation: blob-drift 14s ease-in-out infinite alternate-reverse;
+}
+@keyframes blob-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(4vw, -3vh) scale(1.12); }
 }
 
 #app {
@@ -32,18 +57,32 @@ html, body {
 
 #game-wrap {
   position: relative;
+  z-index: 1;
   width: min(calc(100vw - 16px), calc((100vh - 16px) * 896 / 640));
   aspect-ratio: 896 / 640;
   max-height: calc(100vh - 16px);
-  border-radius: 18px;
+  border-radius: 22px;
   box-shadow:
-    0 30px 80px rgba(10, 4, 24, .55),
-    0 0 0 1px rgba(255,255,255,.18),
-    inset 0 1px 0 rgba(255,255,255,.2);
+    0 36px 90px rgba(10, 4, 24, .62),
+    0 0 0 4px color-mix(in srgb, var(--aura, #ff6fa5) 78%, #fff 12%),
+    0 0 0 10px rgba(12, 6, 24, .45),
+    0 0 42px color-mix(in srgb, var(--aura, #ff6fa5) 50%, transparent),
+    inset 0 2px 0 rgba(255,255,255,.35);
   overflow: hidden;
   background: #120c22;
   container-type: size;
   container-name: stage;
+  --aura: #ff6fa5;
+}
+#game-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgba(8, 2, 20, .28);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%, transparent 82%, rgba(0,0,0,.18));
 }
 
 #game-canvas {
@@ -65,22 +104,45 @@ html, body {
   z-index: 5;
 }
 .hud-left, .hud-right { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.hud-left { flex-direction: column; }
 .hud-right { justify-content: flex-end; }
+.hud-mood {
+  max-width: min(420px, 46cqi);
+  color: #fff;
+  font-size: clamp(11px, 1.7cqi, 15px);
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1.25;
+  opacity: .88;
+  text-shadow: 0 1px 6px rgba(0,0,0,.55);
+  white-space: normal;
+}
 
 .hud-pill {
-  background: rgba(16, 10, 32, .55);
+  background: linear-gradient(180deg, rgba(48, 28, 78, .78), rgba(16, 10, 32, .82));
   color: #fff;
-  border: 1px solid rgba(255,255,255,.22);
+  border: 2px solid rgba(255,255,255,.32);
   border-radius: 999px;
   padding: clamp(6px, 1cqi, 10px) clamp(14px, 2cqi, 20px);
   font-size: clamp(13px, 2.2cqi, 22px);
   font-weight: 700;
   letter-spacing: .02em;
   white-space: nowrap;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.4);
 }
-.hud-pill.score { background: linear-gradient(180deg, #ff8fbb, var(--pink)); border-color: rgba(255,255,255,.4); }
+.hud-pill.score {
+  background: linear-gradient(180deg, #ffb0d0, #ff6fa5 55%, #e04c85);
+  border-color: rgba(255,255,255,.55);
+  text-shadow: 0 1px 0 rgba(90, 20, 50, .25);
+}
+.hud-pill.lives {
+  background: linear-gradient(180deg, #fff1a8, #ffd93d 55%, #e8b020);
+  color: #3a2408;
+  border-color: rgba(255,255,255,.7);
+}
 
 #hud-bonuses { display: flex; gap: 6px; }
 .bonus-chip {
@@ -119,8 +181,10 @@ html, body {
   justify-content: center;
   gap: 14px;
   text-align: center;
-  background: rgba(12, 8, 28, .78);
-  backdrop-filter: blur(12px);
+  background:
+    radial-gradient(700px 420px at 50% 18%, rgba(255, 150, 200, .18), transparent 55%),
+    rgba(10, 6, 24, .82);
+  backdrop-filter: blur(14px) saturate(1.2);
   color: #fff;
   padding: 20px;
   animation: screen-in .3s ease-out;
@@ -130,10 +194,15 @@ html, body {
 .hidden { display: none !important; }
 
 .game-title {
-  font-size: clamp(42px, 10cqi, 104px);
-  letter-spacing: 4px;
+  font-family: "Bangers", "Fredoka", sans-serif;
+  font-size: clamp(52px, 12cqi, 120px);
+  letter-spacing: 6px;
   color: #fff;
-  text-shadow: 0 8px 30px rgba(255, 80, 140, .45), 0 2px 0 rgba(0,0,0,.25);
+  background: linear-gradient(180deg, #fff7d1 0%, #ffe56a 28%, #ff8fbb 62%, #ff5aa0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 0 #3a1848) drop-shadow(0 10px 22px rgba(255, 80, 140, .45));
   transform: none;
   animation: title-bounce 2.8s ease-in-out infinite;
 }
@@ -143,9 +212,11 @@ html, body {
 }
 
 .screen-title {
-  font-size: clamp(28px, 5.5cqi, 56px);
+  font-family: "Bangers", "Fredoka", sans-serif;
+  font-size: clamp(32px, 6cqi, 62px);
+  letter-spacing: 2px;
   color: var(--yellow);
-  text-shadow: 3px 3px 0 rgba(0,0,0,.4);
+  text-shadow: 3px 4px 0 rgba(0,0,0,.4);
 }
 .rainbow-text { animation: rainbow 1.5s linear infinite; }
 @keyframes rainbow { 0%{color:#ff6fa5} 25%{color:#ffd93d} 50%{color:#6ee86e} 75%{color:#6fc3ff} 100%{color:#ff6fa5} }
@@ -163,18 +234,23 @@ html, body {
   font-weight: 700;
   font-size: clamp(16px, 2.6cqi, 24px);
   color: var(--ink);
-  background: linear-gradient(180deg, #ffffff, #efe8ff);
-  border: 1px solid rgba(255,255,255,.7);
-  border-bottom: 3px solid rgba(40, 16, 60, .18);
+  background: linear-gradient(180deg, #ffffff, #efe8ff 55%, #ddd0ff);
+  border: 2px solid rgba(255,255,255,.85);
+  border-bottom: 5px solid rgba(40, 16, 60, .22);
   border-radius: 999px;
   padding: clamp(10px, 1.6cqi, 14px) clamp(34px, 5cqi, 48px);
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+  box-shadow: 0 10px 24px rgba(0,0,0,.22), inset 0 1px 0 #fff;
   transition: transform .12s, filter .12s, box-shadow .12s;
 }
 .btn:hover, .btn:focus-visible { transform: translateY(-2px) scale(1.03); filter: brightness(1.04); outline: none; }
 .btn:active { transform: translateY(1px) scale(.98); border-bottom-width: 2px; }
-.btn.big { background: linear-gradient(180deg, #ffe56a, var(--yellow)); font-size: clamp(20px, 3.6cqi, 36px); padding: clamp(14px, 2cqi, 18px) clamp(44px, 6cqi, 64px); }
+.btn.big {
+  background: linear-gradient(180deg, #fff4b0, #ffe56a 40%, var(--yellow) 70%, #e8b020);
+  font-size: clamp(20px, 3.6cqi, 36px);
+  padding: clamp(14px, 2cqi, 18px) clamp(44px, 6cqi, 64px);
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
 .btn.back { background: rgba(255,255,255,.85); margin-top: 8px; }
 
 /* ===== Grilles de niveaux et skins ===== */
@@ -191,19 +267,38 @@ html, body {
   scrollbar-color: rgba(255, 217, 61, .8) rgba(255, 255, 255, .12);
 }
 .level-card {
-  background: rgba(255,255,255,.12);
-  border: 3px solid rgba(255,255,255,.35);
-  border-radius: 16px;
-  padding: 12px 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--aura, #fff) 28%, rgba(255,255,255,.16)), rgba(16, 8, 28, .42));
+  border: 3px solid color-mix(in srgb, var(--aura, #fff) 62%, rgba(255,255,255,.4));
+  border-radius: 18px;
+  padding: 10px 8px 12px;
   cursor: pointer;
   color: #fff;
   font-family: inherit;
   font-weight: bold;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.25);
   transition: transform .1s;
+  --aura: #ffd93d;
 }
-.level-card:hover:not(.locked), .level-card:focus-visible { transform: scale(1.06); border-color: var(--yellow); outline: none; }
-.level-card .lv-emoji { font-size: clamp(28px, 5cqi, 48px); display: block; }
-.level-card .lv-name { font-size: clamp(13px, 2.2cqi, 18px); display: block; margin-top: 4px; }
+.level-card:hover:not(.locked), .level-card:focus-visible { transform: scale(1.04); border-color: var(--yellow); outline: none; }
+.level-card .lv-emoji { font-size: clamp(24px, 4.4cqi, 40px); display: block; }
+.level-card .lv-name { font-size: clamp(13px, 2.1cqi, 17px); display: block; margin-top: 4px; }
+.level-card .lv-soul {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(10px, 1.5cqi, 13px);
+  color: var(--yellow);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.level-card .lv-mood {
+  display: block;
+  margin-top: 3px;
+  font-size: clamp(10px, 1.45cqi, 12px);
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: .82;
+  white-space: normal;
+}
 .level-card.locked { opacity: .4; cursor: not-allowed; filter: grayscale(1); }
 
 .hud-actions {
@@ -335,13 +430,14 @@ html, body {
   bottom: 18px; left: 50%;
   transform: translateX(-50%);
   z-index: 30;
-  background: var(--yellow);
+  background: linear-gradient(180deg, #fff4b0, var(--yellow));
   color: var(--ink);
   font-weight: bold;
   font-size: clamp(13px, 2vw, 18px);
   padding: 10px 24px;
   border-radius: 999px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  border: 2px solid rgba(255,255,255,.7);
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), inset 0 1px 0 #fff;
   animation: toast-in .3s ease-out;
   pointer-events: none;
   white-space: nowrap;

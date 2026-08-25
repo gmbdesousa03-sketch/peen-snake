@@ -34,6 +34,7 @@
 
   function toMenu() {
     Game.stop();
+    Game.clearProgress();
     AudioMan.stopMusic();
     $('menu-best').textContent = `🏆 Meilleur score : ${Save.data.best}`;
     $('menu-credits').textContent = `💎 ${Save.data.credits} crédits`;
@@ -48,13 +49,21 @@
     const S = Game.state;
     $('hud-score').textContent = `SCORE ${S.score}`;
     $('hud-best').textContent = `🏆 ${Save.data.best}`;
-    $('hud-length').textContent = `📏 ${snakeCm(S.snake)} cm`;
+    $('hud-length').textContent = `📏 ${snakeCm(S.snake).toFixed(1)} cm`;
+    $('hud-lives').textContent = `💛 ${S.lives || 0}`;
     if (S.mode === 'boss' && S.bossDef) {
       $('hud-level').textContent = `⚔️ ${S.bossDef.name}`;
       $('hud-goal').textContent = `❤️ ${S.bossHp}/${S.bossMax}`;
     } else {
       $('hud-level').textContent = `${S.level.emoji} ${S.level.name}`;
-      $('hud-goal').textContent = `🎯 ${S.score}/${S.level.goal}`;
+      $('hud-goal').textContent = `🎯 ${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
+    }
+    const moodEl = $('hud-mood');
+    if (moodEl && S.level && S.mode !== 'boss') {
+      moodEl.textContent = S.level.soul ? `${S.level.soul} — ${S.level.mood || ''}` : (S.level.mood || '');
+      moodEl.classList.toggle('hidden', !S.level.mood);
+    } else if (moodEl) {
+      moodEl.classList.add('hidden');
     }
   }
 
@@ -107,7 +116,7 @@
     $('btn-puchita').classList.toggle('hidden', uiState !== 'playing' || !S.puchitaReady || !!S.puchita);
     for (const [id, until] of active) {
       const type = Game.BONUS_TYPES.find(b => b.id === id);
-      if (!type) continue;
+      if (!type || !type.dur) continue;
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
       const pct = Math.max(0, (until - t) / type.dur) * 100;
@@ -123,37 +132,57 @@
       onscore: refreshHud,
       onlength: refreshHud,
       ongoal: refreshHud,
+      onlives: refreshHud,
       oneffects: refreshEffects,
       onGameOver: handleGameOver,
       onLevelClear: handleLevelClear,
       onBossWin: handleBossWin,
       onBossReady: handleBossReady,
       onCapoteSpawn: () => showToast('🛡️ Une capote est apparue — ramasse-la !'),
-      onCapoteOn: () => showToast('🛡️ Capote enfilée. Virus, rivaux, et le boss.'),
+      onCapoteOn: () => showToast('🛡️ Capote enfilée. Rivaux, et le boss.'),
+      onAmmo: ({ n }) => showToast(`💦 +${n} tirs ! Espace pour shooter. Inutilisés, tu les gardes.`),
+      onCombatPack: ({ name, emoji }) => showToast(`${emoji} ${name} !`),
+      onSkillSpawn: ({ name, emoji }) => showToast(`${emoji} ${name} est apparu — va le chercher !`),
       onSaved: () => showToast('🛡️ La capote t\u2019a sauvé la vie ! (il fallait la changer)'),
+      onSavedLife: () => showToast('💛 Le cœur d’or t’a sauvé !'),
+      onGoldHeart: () => showToast('💛 Un cœur d’or ! Ramasse-le pour une vie.'),
+      onLifeUp: () => showToast('💛 +1 vie !'),
       onSavedBoss: () => showToast('🛡️ La capote a encaissé le coup du boss !'),
       onRivalKill: ({ name, pts }) => showToast(`💥 ${name} à terre. +${pts} pts`),
       onPuchitaHello: () => showToast('💕 hello boys'),
       onPuchitaKill: ({ name, pts }) => showToast(`💕 Puchita a descendu ${name} ! +${pts} pts`),
       onPuchitaBye: () => showToast('💕 Puchita a pris le coup. Quelle héroïne.'),
-      onGrow: ({ grow, name, emoji }) => {
-        if (grow >= 2) showToast(`${emoji || '✨'} ${name} ! +${grow} cm`);
+      onTanked: ({ cm }) => showToast(`💪 Trop costaud. T’encaisses, -${cm} cm`),
+      onGrow: ({ grow, name, emoji, toast }) => {
+        if (grow < 0) showToast(`${emoji || '☠️'} ${name} ! ${grow} cm`);
+        else if (toast || grow >= 1) showToast(`${emoji || '✨'} ${name} ! +${grow} cm`);
       },
       onShopUnlock: items => showShopUnlock(items),
     };
   }
 
-  function startLevel(index) {
+  function startLevel(index, opts) {
+    const cont = !!(opts && opts.continueRun);
     currentLevel = index;
-    carriedScore = 0;
     bossCarry = null;
     phase = 'level';
+    if (!cont) {
+      carriedScore = 0;
+      Game.clearProgress();
+    }
     beginLevelPlay(0);
+  }
+
+  function applyWorldAura(L) {
+    const wrap = $('game-wrap');
+    wrap.dataset.deco = (L && L.deco) || '';
+    wrap.style.setProperty('--aura', (L && L.aura) || '#ff6fa5');
   }
 
   function beginBossFight() {
     phase = 'boss';
     show(null);
+    applyWorldAura(LEVELS[currentLevel]);
     AudioMan.startMusic(LEVELS[currentLevel].music);
     Game.startBoss(currentLevel, gameCallbacks(), bossCarry);
     refreshHud();
@@ -162,9 +191,12 @@
   function beginLevelPlay(carry) {
     phase = 'level';
     show(null);
-    AudioMan.startMusic(LEVELS[currentLevel].music);
+    const L = LEVELS[currentLevel];
+    applyWorldAura(L);
+    AudioMan.startMusic(L.music);
     Game.start(currentLevel, gameCallbacks(), carry || 0);
     refreshHud();
+    if (L.soul) showToast(`${L.emoji} ${L.soul} — ${L.mood}`);
   }
 
   function handleBossReady(carry) {
@@ -173,7 +205,7 @@
     const L = LEVELS[currentLevel];
     const B = BOSSES[currentLevel];
     $('boss-title').textContent = `${B.emoji} ${B.name}`;
-    $('boss-sub').textContent = `Après ${L.emoji} ${L.name} · ${carry.score} pts · ${snakeCm(carry.snake)} cm`;
+    $('boss-sub').textContent = `Après ${L.emoji} ${L.name} · ${carry.score} pts · ${snakeCm(carry.snake).toFixed(1)} cm`;
     $('boss-taunt').textContent = `« ${B.taunt} »`;
     showToast('⚔️ Le boss est là. Tu gardes tout ce que tu as gagné.');
     AudioMan.stopMusic();
@@ -198,6 +230,9 @@
       rival: detail
         ? `${detail} t’a mordu les boules. Aïe.`
         : 'On t’a mordu les boules. C’était prévisible.',
+      puchita: detail
+        ? `${detail} t’a réduit à néant. Plus rien à montrer.`
+        : 'Réduit à 0 cm. Game over.',
     };
     $('gameover-reason').textContent = reasons[reason] || 'Fin tragique et inexpliquée.';
     $('gameover-score').textContent = `Score : ${score}`;
@@ -207,6 +242,7 @@
   }
 
   function handleLevelClear({ score }) {
+    Game.keepProgress();
     AudioMan.sfx.levelClear();
     const isLast = currentLevel >= LEVELS.length - 1;
     Save.unlockLevel(Math.min(LEVELS.length, currentLevel + 2));
@@ -227,8 +263,8 @@
     shopAfterLevel = !!afterLevel;
     $('shop-title').textContent = afterLevel ? '🎉 NIVEAU TERMINÉ' : '💎 BOUTIQUE';
     $('shop-sub').textContent = afterLevel && nextName
-      ? `Prochaine étape : ${nextName.emoji} ${nextName.name}. Achète un bonus pour le prochain niveau.`
-      : 'Dépense tes crédits. Chaque bonus est consommé au lancement d’un niveau.';
+      ? `Tu gardes taille, vies et compétences non utilisées. Un bonus popera sur la prochaine map. Suite : ${nextName.emoji} ${nextName.name}.`
+      : 'Un bonus par niveau, sur la map. Ce que tu n’utilises pas, tu le gardes.';
     $('shop-credits').textContent = `💎 ${Save.data.credits} crédits`;
     $('shop-eaten').textContent = `🍏 ${Save.data.eatenTotal || 0} objets ramassés`;
     if (afterLevel && gain) {
@@ -273,7 +309,7 @@
         $('shop-credits').textContent = `💎 ${Save.data.credits} crédits`;
         if ($('menu-credits')) $('menu-credits').textContent = `💎 ${Save.data.credits} crédits`;
         buildShopGrid();
-        showToast(`${item.emoji} ${item.name} dans le kit !`);
+        showToast(`${item.emoji} ${item.name} : il popera sur la map.`);
       });
       card.innerHTML = `<h3>${item.emoji} ${item.name}</h3><p>${item.desc}</p>`;
       const meta = document.createElement('div');
@@ -330,7 +366,8 @@
       const locked = L.id > Save.data.unlockedLevel;
       const card = document.createElement('button');
       card.className = 'level-card' + (locked ? ' locked' : '');
-      card.innerHTML = `<span class="lv-emoji">${locked ? '🔒' : L.emoji}</span><span class="lv-name">${L.name}</span>`;
+      if (L.aura) card.style.setProperty('--aura', L.aura);
+      card.innerHTML = `<span class="lv-emoji">${locked ? '🔒' : L.emoji}</span><span class="lv-name">${L.name}</span>${L.soul ? `<span class="lv-soul">${L.soul}</span>` : ''}${L.mood ? `<span class="lv-mood">${L.mood}</span>` : ''}`;
       if (!locked) card.addEventListener('click', () => { AudioMan.sfx.click(); startLevel(i); });
       grid.appendChild(card);
     });
@@ -376,7 +413,7 @@
   click('btn-fight', beginBossFight);
   click('btn-resume', resumeGame);
   click('btn-quit', toMenu);
-  click('btn-shop-next', () => startLevel(currentLevel + 1));
+  click('btn-shop-next', () => { startLevel(currentLevel + 1, { continueRun: true }); });
   click('btn-shop-back', toMenu);
   click('btn-replay', () => startLevel(0));
   click('btn-gameover-menu', toMenu);
@@ -442,7 +479,7 @@
       beginBossFight();
     } else if ((e.code === 'Enter') && uiState === 'shop' && shopAfterLevel) {
       AudioMan.sfx.click();
-      startLevel(currentLevel + 1);
+      startLevel(currentLevel + 1, { continueRun: true });
     }
   });
 
@@ -485,7 +522,7 @@
     } else if (uiState === 'boss') {
       if (justPressed(0)) { AudioMan.sfx.click(); beginBossFight(); }
     } else if (uiState === 'shop') {
-      if (justPressed(0) && shopAfterLevel) { AudioMan.sfx.click(); startLevel(currentLevel + 1); }
+      if (justPressed(0) && shopAfterLevel) { AudioMan.sfx.click(); startLevel(currentLevel + 1, { continueRun: true }); }
       else if (justPressed(1)) { AudioMan.sfx.click(); toMenu(); }
     } else if (uiState === 'menu') {
       if (justPressed(0)) { AudioMan.sfx.click(); startLevel(0); } // A = jouer

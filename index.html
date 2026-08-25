@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ZIGOUIGOUI — le Snake le plus bête du monde</title>
+<title>ZIGOUIGOUI — en quête de sa Puchita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,11 +20,13 @@
     <div id="hud" class="hidden">
       <div class="hud-left">
         <div class="hud-pill" id="hud-level">🛁 Salle de Bain</div>
+        <div class="hud-mood hidden" id="hud-mood"></div>
         <div class="hud-pill score" id="hud-score">SCORE 0</div>
         <div class="hud-pill" id="hud-best">🏆 0</div>
       </div>
       <div class="hud-right">
         <div class="hud-pill" id="hud-length">📏 0.5 cm</div>
+        <div class="hud-pill lives" id="hud-lives">💛 0</div>
         <div class="hud-pill" id="hud-goal">🎯 0/150</div>
         <div id="hud-bonuses"></div>
       </div>
@@ -30,7 +35,7 @@
     <!-- ===== MENU PRINCIPAL ===== -->
     <div id="screen-menu" class="screen">
       <h1 class="game-title">ZIGOUIGOUI</h1>
-      <p class="tagline">Le Snake le plus bête du monde 🐍💕</p>
+      <p class="tagline">En quête de sa Puchita 🐍💕</p>
       <div class="menu-buttons">
         <button class="btn big" id="btn-play">▶ JOUER</button>
         <button class="btn" id="btn-levels">🗺️ Niveaux</button>
@@ -80,7 +85,7 @@
 
     <div id="screen-shop" class="screen hidden">
       <h2 class="screen-title" id="shop-title">💎 BOUTIQUE</h2>
-      <p class="tagline" id="shop-sub">Dépense tes crédits. Les objets se débloquent en ramassant de la nourriture.</p>
+      <p class="tagline" id="shop-sub">Un bonus par niveau, sur la map. Ce que tu n’utilises pas, tu le gardes.</p>
       <p class="best-line" id="shop-credits">💎 0 crédits</p>
       <p class="best-line small" id="shop-eaten">🍏 0 objets ramassés</p>
       <p class="best-line small hidden" id="shop-gain"></p>

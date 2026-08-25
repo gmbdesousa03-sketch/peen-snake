@@ -1,6 +1,6 @@
 # ZIGOUIGOUI 🐍💕
 
-Le Snake le plus bête du monde : un jeu arcade 2D humoristique et absurde, où l'on
+En quête de sa Puchita : un jeu arcade 2D humoristique et absurde, où l'on
 pilote un personnage cartoon complètement ridicule qui grandit à chaque objet avalé.
 Aucun contenu explicite : tout est stylisé façon dessin animé débile.
 
