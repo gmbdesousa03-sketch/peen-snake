@@ -6,7 +6,7 @@
   const $ = id => document.getElementById(id);
   const screens = {
     menu: $('screen-menu'), levels: $('screen-levels'), skins: $('screen-skins'),
-    boss: $('screen-boss'), shop: $('screen-shop'),
+    boss: $('screen-boss'), shop: $('screen-shop'), unlock: $('screen-unlock'),
     pause: $('screen-pause'), gameover: $('screen-gameover'),
     victory: $('screen-victory'),
   };
@@ -24,7 +24,7 @@
   function show(name) {
     Object.values(screens).forEach(s => s.classList.add('hidden'));
     if (name && screens[name]) screens[name].classList.remove('hidden');
-    hud.classList.toggle('hidden', !(name === null || name === 'pause'));
+    hud.classList.toggle('hidden', !(name === null || name === 'pause' || name === 'unlock'));
     uiState = name || 'playing';
     if (name) {
       $('btn-shoot').classList.add('hidden');
@@ -136,6 +136,10 @@
       onPuchitaHello: () => showToast('💕 hello boys'),
       onPuchitaKill: ({ name, pts }) => showToast(`💕 Puchita a descendu ${name} ! +${pts} pts`),
       onPuchitaBye: () => showToast('💕 Puchita a pris le coup. Quelle héroïne.'),
+      onGrow: ({ grow, name, emoji }) => {
+        if (grow >= 2) showToast(`${emoji || '✨'} ${name} ! +${grow} cm`);
+      },
+      onShopUnlock: items => showShopUnlock(items),
     };
   }
 
@@ -226,6 +230,7 @@
       ? `Prochaine étape : ${nextName.emoji} ${nextName.name}. Achète un bonus pour le prochain niveau.`
       : 'Dépense tes crédits. Chaque bonus est consommé au lancement d’un niveau.';
     $('shop-credits').textContent = `💎 ${Save.data.credits} crédits`;
+    $('shop-eaten').textContent = `🍏 ${Save.data.eatenTotal || 0} objets ramassés`;
     if (afterLevel && gain) {
       $('shop-gain').textContent = `+${gain} crédits gagnés`;
       $('shop-gain').classList.remove('hidden');
@@ -243,8 +248,22 @@
     grid.innerHTML = '';
     SHOP_ITEMS.forEach(item => {
       const owned = Save.kitCount(item.id);
+      const locked = !Save.isShopUnlocked(item.id);
       const card = document.createElement('div');
-      card.className = 'shop-card';
+      card.className = 'shop-card' + (locked ? ' locked' : '');
+      if (locked) {
+        card.innerHTML = `<h3>🔒 ???</h3><p>Ramasse ${item.unlockEaten} objets en jeu pour débloquer cet article.</p>`;
+        const meta = document.createElement('div');
+        meta.className = 'shop-meta';
+        meta.innerHTML = `<span>${Save.data.eatenTotal || 0} / ${item.unlockEaten}</span>`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Verrouillé';
+        btn.disabled = true;
+        meta.appendChild(btn);
+        card.appendChild(meta);
+        grid.appendChild(card);
+        return;
+      }
       const btn = document.createElement('button');
       btn.textContent = `Acheter · ${item.cost}💎`;
       btn.disabled = Save.data.credits < item.cost;
@@ -264,6 +283,27 @@
       card.appendChild(meta);
       grid.appendChild(card);
     });
+  }
+
+  function showShopUnlock(items) {
+    if (!items || !items.length) return;
+    Game.pause();
+    const many = items.length > 1;
+    $('unlock-title').textContent = many ? 'Objets débloqués' : `${items[0].emoji} ${items[0].name}`;
+    const list = $('unlock-list');
+    list.innerHTML = items.map(it =>
+      `<p class="unlock-item">${it.emoji} <strong>${it.name}</strong><br><span>${it.desc}</span></p>`
+    ).join('');
+    AudioMan.sfx.bonus();
+    show('unlock');
+  }
+
+  function dismissShopUnlock() {
+    if (uiState !== 'unlock') return;
+    AudioMan.sfx.click();
+    Game.resume();
+    show(null);
+    refreshEffects();
   }
 
   let toastTimer = null;
@@ -341,6 +381,7 @@
   click('btn-replay', () => startLevel(0));
   click('btn-gameover-menu', toMenu);
   click('btn-victory-menu', toMenu);
+  click('btn-unlock-ok', dismissShopUnlock);
   $('btn-shoot').addEventListener('click', e => {
     e.stopPropagation();
     Game.tryShoot();
@@ -377,6 +418,7 @@
     if (e.code === 'Escape' || e.code === 'KeyP') {
       if (uiState === 'playing') pauseGame();
       else if (uiState === 'pause') resumeGame();
+      else if (uiState === 'unlock') dismissShopUnlock();
       e.preventDefault();
       return;
     }
@@ -388,6 +430,9 @@
       e.preventDefault();
     } else if (uiState === 'playing' && e.code === 'KeyH') {
       Game.callPuchita();
+      e.preventDefault();
+    } else if ((e.code === 'Enter' || e.code === 'Space') && uiState === 'unlock') {
+      dismissShopUnlock();
       e.preventDefault();
     } else if ((e.code === 'Enter' || e.code === 'Space') && uiState === 'gameover') {
       AudioMan.sfx.click();
@@ -430,6 +475,8 @@
       if (justPressed(3) || justPressed(2)) Game.callPuchita();
     } else if (uiState === 'pause') {
       if (justPressed(9) || justPressed(0)) resumeGame();
+    } else if (uiState === 'unlock') {
+      if (justPressed(0) || justPressed(9)) dismissShopUnlock();
     } else if (uiState === 'gameover') {
       if (justPressed(0)) {
         AudioMan.sfx.click();

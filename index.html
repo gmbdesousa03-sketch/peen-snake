@@ -52,7 +52,7 @@
     <!-- ===== SKINS ===== -->
     <div id="screen-skins" class="screen hidden">
       <h2 class="screen-title">Garde-robe du Zigouigoui</h2>
-      <p class="tagline small">Débloque des skins en cumulant des points !</p>
+      <p class="tagline small">Skins originaux, puis tous les drapeaux — Europe et grand monde.</p>
       <div id="skin-grid"></div>
       <button class="btn back" data-back>← Retour</button>
     </div>
@@ -78,16 +78,27 @@
       </div>
     </div>
 
-    <!-- ===== BOUTIQUE / NIVEAU TERMINÉ ===== -->
     <div id="screen-shop" class="screen hidden">
       <h2 class="screen-title" id="shop-title">💎 BOUTIQUE</h2>
-      <p class="tagline" id="shop-sub">Dépense tes crédits pour le prochain niveau.</p>
+      <p class="tagline" id="shop-sub">Dépense tes crédits. Les objets se débloquent en ramassant de la nourriture.</p>
       <p class="best-line" id="shop-credits">💎 0 crédits</p>
+      <p class="best-line small" id="shop-eaten">🍏 0 objets ramassés</p>
       <p class="best-line small hidden" id="shop-gain"></p>
       <div id="shop-grid"></div>
       <div class="menu-buttons">
         <button class="btn big hidden" id="btn-shop-next">➡ Niveau suivant</button>
         <button class="btn" id="btn-shop-back">← Retour</button>
+      </div>
+    </div>
+
+    <!-- ===== DÉBLOCAGE BOUTIQUE ===== -->
+    <div id="screen-unlock" class="screen hidden">
+      <p class="tagline">🎉 NOUVEAU EN BOUTIQUE</p>
+      <h2 class="screen-title" id="unlock-title">Objet débloqué</h2>
+      <div id="unlock-list"></div>
+      <p class="tagline small">Achète-le entre deux niveaux, avec tes crédits.</p>
+      <div class="menu-buttons">
+        <button class="btn big" id="btn-unlock-ok">▶ Continuer</button>
       </div>
     </div>
 
@@ -106,7 +117,7 @@
     <!-- ===== VICTOIRE FINALE ===== -->
     <div id="screen-victory" class="screen hidden">
       <h2 class="screen-title rainbow-text">👑 VICTOIRE TOTALE 👑</h2>
-      <p class="tagline">Le zigouigoui a conquis les six mondes.<br>L'humanité ne s'en remettra jamais.</p>
+      <p class="tagline">Le zigouigoui a conquis tous les mondes,<br>jusqu’au Grand Corps. L'humanité ne s'en remettra jamais.</p>
       <p class="best-line" id="victory-score">Score : 0</p>
       <div class="menu-buttons">
         <button class="btn big" id="btn-victory-menu">🏠 Menu principal</button>

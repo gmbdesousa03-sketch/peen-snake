@@ -65,7 +65,10 @@ const AudioMan = (() => {
     club:     { bpm: 128, root: 57, scale: [0, 3, 5, 7, 10], lead: 'square',  bass: 'sawtooth', hat: true  },
     dungeon:  { bpm: 92,  root: 52, scale: [0, 1, 4, 5, 7, 8], lead: 'square', bass: 'square',  hat: false },
     space:    { bpm: 84,  root: 64, scale: [0, 2, 4, 6, 8, 10], lead: 'sine', bass: 'triangle', hat: false },
+    kitchen:  { bpm: 122, root: 65, scale: [0, 2, 4, 7, 9, 11], lead: 'triangle', bass: 'square', hat: true },
+    sauna:    { bpm: 88,  root: 57, scale: [0, 3, 5, 7, 10], lead: 'sine', bass: 'triangle', hat: false },
     chaos:    { bpm: 150, root: 60, scale: [0, 1, 3, 4, 6, 8, 10], lead: 'sawtooth', bass: 'square', hat: true },
+    body:     { bpm: 96,  root: 60, scale: [0, 3, 5, 7, 8, 10], lead: 'sine', bass: 'triangle', hat: false },
   };
 
   let leadNote = 0;
