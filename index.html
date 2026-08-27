@@ -7,35 +7,37 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=play15">
 </head>
 <body>
 <div id="app">
 
-  <!-- ===== ZONE DE JEU ===== -->
-  <div id="game-wrap">
-    <canvas id="game-canvas" width="896" height="640"></canvas>
-
-    <!-- HUD -->
+  <div id="stage">
+    <!-- Scores hors de la map -->
     <div id="hud" class="hidden">
       <div class="hud-left">
         <div class="hud-pill" id="hud-level">🛁 Salle de Bain</div>
         <div class="hud-mood hidden" id="hud-mood"></div>
-        <div class="hud-pill score" id="hud-score">SCORE 0</div>
-        <div class="hud-pill" id="hud-best">🏆 0</div>
+        <div class="hud-pill score" id="hud-score">Score 0</div>
+        <div class="hud-pill" id="hud-best">Record 0</div>
       </div>
       <div class="hud-right">
-        <div class="hud-pill" id="hud-length">📏 0.5 cm</div>
-        <div class="hud-pill lives" id="hud-lives">💛 0</div>
-        <div class="hud-pill" id="hud-goal">🎯 0/150</div>
+        <div class="hud-pill" id="hud-length">0.5 cm</div>
+        <div class="hud-pill lives" id="hud-lives">Vies 0</div>
+        <div class="hud-pill goal" id="hud-goal">Boss 0/150</div>
         <div id="hud-bonuses"></div>
       </div>
     </div>
+
+    <!-- ===== ZONE DE JEU ===== -->
+    <div id="game-wrap">
+    <canvas id="game-canvas" width="896" height="640"></canvas>
 
     <!-- ===== MENU PRINCIPAL ===== -->
     <div id="screen-menu" class="screen">
       <h1 class="game-title">ZIGOUIGOUI</h1>
       <p class="tagline">En quête de sa Puchita 🐍💕</p>
+      <canvas id="menu-hero" width="240" height="72" aria-hidden="true"></canvas>
       <div class="menu-buttons">
         <button class="btn big" id="btn-play">▶ JOUER</button>
         <button class="btn" id="btn-levels">🗺️ Niveaux</button>
@@ -44,7 +46,7 @@
       </div>
       <p class="best-line" id="menu-best">🏆 Meilleur score : 0</p>
       <p class="best-line small" id="menu-credits">💎 0 crédits</p>
-      <p class="controls-hint">⌨️ Flèches / ZQSD &nbsp;•&nbsp; 🎮 Manette &nbsp;•&nbsp; 📱 Swipe &nbsp;•&nbsp; Échap = Pause</p>
+      <p class="controls-hint">⌨️ Flèches / ZQSD &nbsp;•&nbsp; 🎮 Manette &nbsp;•&nbsp; 📱 Swipe &nbsp;•&nbsp; Échap = Pause &nbsp;•&nbsp; M = Son</p>
     </div>
 
     <!-- ===== SÉLECTION DE NIVEAU ===== -->
@@ -133,15 +135,18 @@
       <button id="btn-puchita" class="action-btn hidden" type="button" title="Appeler Puchita (H)">💕</button>
       <button id="btn-shoot" class="action-btn hidden" type="button" title="Tirer (Espace)">💦</button>
     </div>
+    <div id="play-hint" class="play-hint hidden">➡️ Flèches pour bouger · ramasse le bonus qui brille</div>
+    <button id="btn-mute" class="mute-btn" type="button" title="Couper le son (M)">🔊</button>
 
     <!-- Notif de déblocage de skin -->
     <div id="toast" class="hidden"></div>
   </div>
+  </div>
 
 </div>
-<script src="js/audio.js"></script>
-<script src="js/data.js"></script>
-<script src="js/game.js"></script>
-<script src="js/main.js"></script>
+<script src="js/audio.js?v=play15"></script>
+<script src="js/data.js?v=play15"></script>
+<script src="js/game.js?v=play15"></script>
+<script src="js/main.js?v=play15"></script>
 </body>
 </html>

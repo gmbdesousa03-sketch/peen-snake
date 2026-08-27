@@ -38,30 +38,38 @@
     AudioMan.stopMusic();
     $('menu-best').textContent = `🏆 Meilleur score : ${Save.data.best}`;
     $('menu-credits').textContent = `💎 ${Save.data.credits} crédits`;
+    const hero = $('menu-hero');
+    if (hero) {
+      const skin = SKINS.find(s => s.id === Save.data.skin) || SKINS[0];
+      Game.drawSkinPreview(hero, skin);
+    }
+    AudioMan.duckMusic(false);
+    AudioMan.startMusic('menu');
     show('menu');
   }
 
   /* ================= HUD ================= */
 
-  const EFFECT_LABELS = { speed: '⚡ TURBO', invincible: '🌟 STAR', multi: '💰 ×2' };
+  const EFFECT_LABELS = { speed: '⚡ Turbo', invincible: '🌟 Invincible', multi: '💰 Score ×2' };
 
   function refreshHud() {
     const S = Game.state;
-    $('hud-score').textContent = `SCORE ${S.score}`;
-    $('hud-best').textContent = `🏆 ${Save.data.best}`;
-    $('hud-length').textContent = `📏 ${snakeCm(S.snake).toFixed(1)} cm`;
-    $('hud-lives').textContent = `💛 ${S.lives || 0}`;
+    $('hud-score').textContent = `Score ${S.score}`;
+    $('hud-best').textContent = `Record ${Save.data.best}`;
+    $('hud-length').textContent = `${snakeCm(S.snake).toFixed(1)} cm`;
+    const lives = S.lives || 0;
+    $('hud-lives').textContent = lives ? `Vies ${lives}` : 'Vies 0';
     if (S.mode === 'boss' && S.bossDef) {
       $('hud-level').textContent = `⚔️ ${S.bossDef.name}`;
-      $('hud-goal').textContent = `❤️ ${S.bossHp}/${S.bossMax}`;
+      $('hud-goal').textContent = `PV ${S.bossHp}/${S.bossMax}`;
     } else {
       $('hud-level').textContent = `${S.level.emoji} ${S.level.name}`;
-      $('hud-goal').textContent = `🎯 ${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
+      $('hud-goal').textContent = `Boss ${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
     }
     const moodEl = $('hud-mood');
-    if (moodEl && S.level && S.mode !== 'boss') {
-      moodEl.textContent = S.level.soul ? `${S.level.soul} — ${S.level.mood || ''}` : (S.level.mood || '');
-      moodEl.classList.toggle('hidden', !S.level.mood);
+    if (moodEl && S.level && S.mode !== 'boss' && S.level.soul) {
+      moodEl.textContent = S.level.soul;
+      moodEl.classList.remove('hidden');
     } else if (moodEl) {
       moodEl.classList.add('hidden');
     }
@@ -77,31 +85,31 @@
     if (S.capote) {
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
-      chip.innerHTML = '<span>🛡️ CAPOTE AU SOL</span>';
+      chip.innerHTML = '<span>🛡️ Capote au sol</span>';
       box.appendChild(chip);
     }
     if (S.shield) {
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
-      chip.innerHTML = '<span>🛡️ PROTÉGÉ</span><span class="bar"><i style="width:100%"></i></span>';
+      chip.innerHTML = '<span>🛡️ Protégé</span><span class="bar"><i style="width:100%"></i></span>';
       box.appendChild(chip);
     }
     if (S.antigrav) {
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
-      chip.innerHTML = '<span>🌀 ANTI-G</span>';
+      chip.innerHTML = '<span>🌀 Anti-G</span>';
       box.appendChild(chip);
     }
     if ((S.spermShots || 0) > 0) {
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
-      chip.innerHTML = `<span>💦 ×${S.spermShots}</span>`;
+      chip.innerHTML = `<span>💦 Tirs ×${S.spermShots}</span>`;
       box.appendChild(chip);
     }
     if (S.puchitaReady && !S.puchita) {
       const chip = document.createElement('div');
       chip.className = 'bonus-chip';
-      chip.innerHTML = '<span>💕 HELLO BOYS</span>';
+      chip.innerHTML = '<span>💕 Puchita prête</span>';
       box.appendChild(chip);
     }
     if (S.puchita) {
@@ -109,7 +117,7 @@
       chip.className = 'bonus-chip';
       chip.innerHTML = S.puchita.phase === 'hello'
         ? '<span>💕 hello boys…</span>'
-        : '<span>💕 PUCHITA</span>';
+        : '<span>💕 Puchita</span>';
       box.appendChild(chip);
     }
     $('btn-shoot').classList.toggle('hidden', uiState !== 'playing' || (S.spermShots || 0) <= 0);
@@ -183,6 +191,7 @@
     phase = 'boss';
     show(null);
     applyWorldAura(LEVELS[currentLevel]);
+    AudioMan.duckMusic(false);
     AudioMan.startMusic(LEVELS[currentLevel].music);
     Game.startBoss(currentLevel, gameCallbacks(), bossCarry);
     refreshHud();
@@ -194,9 +203,9 @@
     const L = LEVELS[currentLevel];
     applyWorldAura(L);
     AudioMan.startMusic(L.music);
+    showPlayHint();
     Game.start(currentLevel, gameCallbacks(), carry || 0);
     refreshHud();
-    if (L.soul) showToast(`${L.emoji} ${L.soul} — ${L.mood}`);
   }
 
   function handleBossReady(carry) {
@@ -343,12 +352,44 @@
   }
 
   let toastTimer = null;
+  let toastQueue = [];
+  let toastBusy = false;
   function showToast(text) {
+    if (!text) return;
+    toastQueue.push(text);
+    pumpToast();
+  }
+  function pumpToast() {
+    if (toastBusy || !toastQueue.length) return;
+    toastBusy = true;
     const toast = $('toast');
-    toast.textContent = text;
+    toast.textContent = toastQueue.shift();
     toast.classList.remove('hidden');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.add('hidden'), 3500);
+    toastTimer = setTimeout(() => {
+      toast.classList.add('hidden');
+      toastBusy = false;
+      pumpToast();
+    }, 2600);
+  }
+
+  let hintTimer = null;
+  function showPlayHint() {
+    showToast('➡️ Flèches pour bouger · ramasse le bonus qui brille');
+  }
+
+  function syncMuteBtn() {
+    const btn = $('btn-mute');
+    if (!btn) return;
+    const off = AudioMan.isMuted();
+    btn.textContent = off ? '🔇' : '🔊';
+    btn.title = off ? 'Remettre le son (M)' : 'Couper le son (M)';
+  }
+  function toggleMute() {
+    const off = AudioMan.setMuted(!AudioMan.isMuted());
+    Save.data.muted = off;
+    Save.write();
+    syncMuteBtn();
   }
 
   function notifyUnlocks(skins) {
@@ -419,6 +460,11 @@
   click('btn-gameover-menu', toMenu);
   click('btn-victory-menu', toMenu);
   click('btn-unlock-ok', dismissShopUnlock);
+  $('btn-mute').addEventListener('click', e => {
+    e.stopPropagation();
+    AudioMan.ensureCtx();
+    toggleMute();
+  });
   $('btn-shoot').addEventListener('click', e => {
     e.stopPropagation();
     Game.tryShoot();
@@ -433,12 +479,12 @@
   function pauseGame() {
     if (uiState !== 'playing') return;
     Game.pause();
-    AudioMan.stopMusic();
+    AudioMan.duckMusic(true);
     show('pause');
   }
   function resumeGame() {
     if (uiState !== 'pause') return;
-    AudioMan.startMusic(LEVELS[currentLevel].music);
+    AudioMan.duckMusic(false);
     Game.resume();
     show(null);
   }
@@ -452,6 +498,11 @@
   };
 
   document.addEventListener('keydown', e => {
+    if (e.code === 'KeyM') {
+      toggleMute();
+      e.preventDefault();
+      return;
+    }
     if (e.code === 'Escape' || e.code === 'KeyP') {
       if (uiState === 'playing') pauseGame();
       else if (uiState === 'pause') resumeGame();
@@ -555,7 +606,12 @@
   /* ================= DÉMARRAGE ================= */
 
   // débloque l'audio au premier geste (politique navigateur)
-  document.addEventListener('pointerdown', () => AudioMan.ensureCtx(), { once: true });
+  document.addEventListener('pointerdown', () => {
+    AudioMan.ensureCtx();
+    if (uiState === 'menu') AudioMan.startMusic('menu');
+  }, { once: true });
 
+  AudioMan.setMuted(!!Save.data.muted);
+  syncMuteBtn();
   toMenu();
 })();

@@ -55,6 +55,18 @@ function wallV(x, y1, y2, wall) {
   for (let y = y1; y <= y2; y++) out.push({ x, y, wall });
   return out;
 }
+function blob(cx, cy, r, wall) {
+  const out = [];
+  for (let y = Math.ceil(cy - r); y <= Math.floor(cy + r); y++) {
+    for (let x = Math.ceil(cx - r); x <= Math.floor(cx + r); x++) {
+      if (x < 0 || y < 0 || x >= GRID.COLS || y >= GRID.ROWS) continue;
+      if (y === 16 && x >= 4) continue;
+      const dx = x - cx, dy = y - cy;
+      if (dx * dx + dy * dy <= r * r + 0.2) out.push({ x, y, wall });
+    }
+  }
+  return out;
+}
 
 /* ---- MÉCHANTES PUCHITAS ----
    Toutes retirent 0.5 cm. À 0 cm, le joueur meurt.
@@ -62,12 +74,12 @@ function wallV(x, y1, y2, wall) {
 const VIRUS_NAMES = ['Puchita Furax', 'Puchita Jalouse', 'Puchita Toxique'];
 const virus = (x, y, variant, move) => ({ x, y, virus: variant % 3, move });
 const COMBAT_PACKS = {
-  ammo: { emoji: '💦', name: 'Tir de sperme', shots: 2 },
-  shield: { emoji: '🛡️', name: 'Capote de protection' },
-  star: { emoji: '🌟', name: 'Invincible', dur: 5500 },
-  antigrav: { emoji: '🌀', name: 'Bouclier anti-gravité' },
-  puchita: { emoji: '💕', name: 'Invitation de Puchita' },
-  pump: { emoji: '💪', name: 'Pompe de départ', grow: 3 },
+  ammo: { emoji: '💦', name: 'Tir de sperme', short: 'Tirs', shots: 2 },
+  shield: { emoji: '🛡️', name: 'Capote de protection', short: 'Capote' },
+  star: { emoji: '🌟', name: 'Invincible', short: 'Star', dur: 5500 },
+  antigrav: { emoji: '🌀', name: 'Bouclier anti-gravité', short: 'Anti-G' },
+  puchita: { emoji: '💕', name: 'Invitation de Puchita', short: 'Puchita' },
+  pump: { emoji: '💪', name: 'Pompe de départ', short: 'Pompe', grow: 3 },
 };
 const KIT_TO_PACK = {
   sperm: 'ammo', capote: 'shield', antigrav: 'antigrav', puchita: 'puchita', pump: 'pump',
@@ -167,12 +179,13 @@ const LEVELS = [
       ...wallV(14, 2, 4, 'brick'),
       ...wallV(13, 17, 18, 'brick'),
       ...wallV(2, 2, 4, 'brick'),
+      ...wallH(13, 14, 9, 'brick'),
       { x: 13, y: 3, e: '🦴' }, { x: 14, y: 17, e: '🦴' },
       { x: 2, y: 9, e: '🕯️' }, { x: 25, y: 9, e: '🐀' },
       { x: 26, y: 2, e: '🛡️' },
       virus(6, 9, 1, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
       virus(21, 9, 2, { axis: 'x', min: 16, max: 24, dir: -1, every: 4 }),
-      virus(13, 9, 0, { axis: 'y', min: 8, max: 12, dir: 1, every: 5 }),
+      virus(12, 10, 0, { axis: 'y', min: 8, max: 12, dir: 1, every: 5 }),
       virus(2, 17, 1), virus(24, 3, 0), virus(8, 3, 2), virus(11, 11, 0),
       virus(19, 17, 0, { axis: 'x', min: 16, max: 24, dir: 1, every: 5 }),
       virus(25, 14, 2, { axis: 'y', min: 10, max: 15, dir: 1, every: 5 }),
@@ -187,13 +200,16 @@ const LEVELS = [
     mood: 'Vide. Personne ne t’entend crier. Personne ne t’entend rire.',
     aura: '#8a6cff', vig: 'rgba(4, 2, 24, .62)',
     obstacles: [
-      ...wallH(9, 11, 8, 'asteroid'), ...wallH(16, 18, 8, 'asteroid'),
-      ...wallV(4, 5, 7, 'asteroid'), ...wallH(22, 24, 12, 'asteroid'),
-      ...wallH(1, 3, 10, 'asteroid'),
-      { x: 6, y: 4, e: '🪐' }, { x: 21, y: 15, e: '🪐' },
+      ...wallH(8, 10, 4, 'asteroid'), ...wallH(9, 10, 5, 'asteroid'),
+      ...wallH(16, 19, 7, 'asteroid'),
+      ...wallV(4, 6, 9, 'asteroid'),
+      ...wallH(22, 25, 11, 'asteroid'),
+      ...wallH(1, 3, 12, 'asteroid'),
+      ...wallV(13, 13, 15, 'asteroid'),
+      { x: 6, y: 3, e: '🪐' }, { x: 21, y: 15, e: '🪐' },
       { x: 13, y: 5, e: '🛸' }, { x: 25, y: 3, e: '⭐' },
       { x: 2, y: 2, e: '🌙' },
-      virus(14, 13, 0, { axis: 'x', min: 8, max: 20, dir: 1, every: 3 }),
+      virus(14, 11, 0, { axis: 'x', min: 8, max: 20, dir: 1, every: 3 }),
       virus(8, 12, 1, { axis: 'y', min: 11, max: 15, dir: 1, every: 4 }),
       virus(20, 12, 2, { axis: 'y', min: 11, max: 15, dir: -1, every: 4 }),
       virus(5, 8, 1), virus(22, 6, 0), virus(3, 14, 2), virus(11, 3, 0),
@@ -210,23 +226,27 @@ const LEVELS = [
     mood: 'Huile chaude, couteaux, chef en furie. Ça sent le beurre et la vengeance.',
     aura: '#e8a040', vig: 'rgba(90, 40, 8, .40)',
     obstacles: [
-      ...wallH(6, 11, 6, 'wood'),
-      ...wallH(16, 21, 12, 'wood'),
-      ...wallV(13, 3, 5, 'wood'),
-      ...wallH(2, 4, 12, 'wood'),
-      ...wallV(24, 3, 6, 'wood'),
-      ...wallH(8, 10, 14, 'wood'),
-      { x: 8, y: 5, e: '🍳' }, { x: 19, y: 11, e: '🥘' },
-      { x: 4, y: 10, e: '🥖' },
-      { x: 22, y: 4, e: '🔪' }, { x: 15, y: 17, e: '🧄' },
-      { x: 1, y: 3, e: '🧂' },
-      virus(10, 3, 0), virus(20, 4, 1), virus(7, 14, 2), virus(18, 15, 0),
-      virus(3, 7, 1), virus(14, 10, 2),
-      virus(16, 8, 1, { axis: 'x', min: 12, max: 22, dir: 1, every: 4 }),
-      virus(5, 8, 0, { axis: 'y', min: 3, max: 12, dir: 1, every: 5 }),
-      virus(22, 10, 2, { axis: 'y', min: 7, max: 14, dir: -1, every: 4 }),
+      ...wallH(6, 12, 3, 'wood'),
+      ...wallH(16, 22, 3, 'wood'),
+      ...wallH(10, 12, 8, 'wood'),
+      ...wallH(15, 17, 8, 'wood'),
+      ...wallH(10, 17, 10, 'wood'),
+      ...wallV(25, 4, 9, 'wood'),
+      ...wallH(24, 25, 4, 'wood'),
+      ...wallH(2, 6, 13, 'wood'),
+      ...wallV(2, 13, 15, 'wood'),
+      ...wallH(20, 23, 14, 'wood'),
+      { x: 8, y: 2, e: '🍳' }, { x: 19, y: 2, e: '🥘' },
+      { x: 13, y: 9, e: '🥖' },
+      { x: 24, y: 6, e: '🔪' }, { x: 15, y: 17, e: '🧄' },
+      { x: 1, y: 3, e: '🧂' }, { x: 22, y: 13, e: '🍅' },
+      virus(10, 5, 0), virus(20, 5, 1), virus(7, 14, 2), virus(18, 14, 0),
+      virus(4, 7, 1), virus(14, 12, 2),
+      virus(16, 7, 1, { axis: 'x', min: 12, max: 22, dir: 1, every: 4 }),
+      virus(5, 8, 0, { axis: 'y', min: 4, max: 12, dir: 1, every: 5 }),
+      virus(22, 10, 2, { axis: 'y', min: 6, max: 14, dir: -1, every: 4 }),
     ],
-    rivals: 6, rivalSpeed: 1.02,
+    rivals: 6, rivalSpeed: 1.02, rivalSmart: 0.78,
   },
   {
     id: 7, name: 'Sauna', emoji: '🧖', food: '🧴',
@@ -236,22 +256,22 @@ const LEVELS = [
     mood: 'Trop chaud. La serviette glisse. Personne ne parle.',
     aura: '#e07038', vig: 'rgba(80, 20, 4, .48)',
     obstacles: [
-      ...wallH(3, 9, 5, 'wood'),
-      ...wallH(18, 24, 14, 'wood'),
-      ...wallV(13, 8, 12, 'wood'),
-      ...wallH(15, 17, 3, 'wood'),
-      ...wallV(8, 14, 15, 'wood'),
-      ...wallH(1, 3, 9, 'wood'),
-      { x: 4, y: 4, e: '🪨' }, { x: 23, y: 3, e: '🔥' },
-      { x: 16, y: 17, e: '🧴' },
-      { x: 26, y: 8, e: '💧' },
+      ...wallH(2, 10, 3, 'wood'),
+      ...wallH(2, 10, 6, 'wood'),
+      ...wallV(13, 8, 11, 'wood'),
+      { x: 13, y: 7, wall: 'wood' }, { x: 14, y: 7, wall: 'wood' },
+      ...wallH(17, 25, 12, 'wood'),
+      ...wallH(17, 25, 15, 'wood'),
+      { x: 4, y: 2, e: '🪨' }, { x: 14, y: 6, e: '🔥' },
+      { x: 23, y: 3, e: '💧' },
+      { x: 16, y: 17, e: '🧴' }, { x: 1, y: 8, e: '🧖' },
       virus(8, 9, 1), virus(20, 6, 2), virus(11, 14, 0), virus(3, 10, 1),
-      virus(25, 12, 0), virus(15, 6, 2),
+      virus(25, 9, 0), virus(15, 5, 2),
       virus(6, 12, 0, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
-      virus(21, 9, 2, { axis: 'y', min: 4, max: 13, dir: -1, every: 4 }),
-      virus(16, 8, 1, { axis: 'x', min: 14, max: 22, dir: 1, every: 5 }),
+      virus(21, 9, 2, { axis: 'y', min: 4, max: 11, dir: -1, every: 4 }),
+      virus(16, 8, 1, { axis: 'x', min: 15, max: 22, dir: 1, every: 5 }),
     ],
-    rivals: 6, rivalSpeed: 0.96,
+    rivals: 6, rivalSpeed: 0.96, rivalSmart: 0.88,
   },
   {
     id: 8, name: 'CHAOS FINAL', emoji: '🌪️', food: '🎁',
@@ -261,22 +281,26 @@ const LEVELS = [
     mood: 'Rien n’est vrai. Tout pique. Le sol ment.',
     aura: '#c44cff', vig: 'rgba(40, 0, 40, .55)',
     obstacles: [
-      ...wallH(12, 15, 4, 'glitch'),
-      ...wallH(12, 15, 15, 'glitch'),
-      ...wallV(6, 8, 10, 'glitch'),
-      ...wallV(21, 8, 10, 'glitch'),
-      ...wallH(1, 3, 5, 'glitch'),
-      { x: 2, y: 2, e: '👾' }, { x: 25, y: 17, e: '💣' },
+      ...wallH(3, 6, 3, 'glitch'),
+      ...wallH(21, 24, 3, 'glitch'),
+      ...wallH(11, 16, 5, 'glitch'),
+      ...wallV(8, 7, 11, 'glitch'),
+      ...wallV(19, 7, 11, 'glitch'),
+      ...wallH(11, 16, 14, 'glitch'),
+      ...wallH(1, 3, 11, 'glitch'),
+      ...wallH(24, 26, 8, 'glitch'),
+      { x: 4, y: 8, wall: 'glitch' }, { x: 23, y: 12, wall: 'glitch' },
+      { x: 2, y: 2, e: '👾' }, { x: 25, y: 17, e: '💣' }, { x: 14, y: 2, e: '🌀' },
       virus(5, 4, 0), virus(22, 15, 1), virus(14, 17, 2), virus(3, 12, 1),
-      virus(26, 7, 0), virus(8, 14, 2),
-      virus(9, 8, 2, { axis: 'x', min: 6, max: 21, dir: 1, every: 3 }),
-      virus(18, 12, 0, { axis: 'x', min: 6, max: 21, dir: -1, every: 3 }),
-      virus(14, 10, 1, { axis: 'y', min: 5, max: 14, dir: 1, every: 4 }),
+      virus(26, 6, 0), virus(8, 14, 2),
+      virus(9, 8, 2, { axis: 'x', min: 9, max: 18, dir: 1, every: 3 }),
+      virus(18, 12, 0, { axis: 'x', min: 9, max: 18, dir: -1, every: 3 }),
+      virus(14, 10, 1, { axis: 'y', min: 6, max: 13, dir: 1, every: 4 }),
       virus(2, 14, 2, { axis: 'y', min: 8, max: 15, dir: -1, every: 3 }),
       virus(22, 4, 0, { axis: 'y', min: 2, max: 13, dir: 1, every: 3 }),
       virus(10, 3, 1, { axis: 'x', min: 3, max: 11, dir: 1, every: 4 }),
     ],
-    rivals: 6, rivalSpeed: 0.88,
+    rivals: 6, rivalSpeed: 0.88, rivalSmart: 1.0,
   },
   {
     id: 9, name: 'Le Grand Corps', emoji: '💋', food: '💋',
@@ -286,29 +310,29 @@ const LEVELS = [
     mood: 'Peau chaude. Elle respire encore. Tu es trop petit.',
     aura: '#ff7aa8', vig: 'rgba(90, 20, 40, .42)',
     obstacles: [
-      ...wallH(6, 10, 3, 'flesh'),
-      ...wallH(16, 20, 3, 'flesh'),
-      { x: 9, y: 5, wall: 'flesh' }, { x: 8, y: 6, wall: 'flesh' },
-      { x: 9, y: 6, wall: 'flesh' }, { x: 10, y: 6, wall: 'flesh' },
-      { x: 9, y: 7, wall: 'flesh' },
-      { x: 18, y: 5, wall: 'flesh' }, { x: 17, y: 6, wall: 'flesh' },
-      { x: 18, y: 6, wall: 'flesh' }, { x: 19, y: 6, wall: 'flesh' },
-      { x: 18, y: 7, wall: 'flesh' },
-      ...wallV(5, 8, 11, 'flesh'),
-      ...wallV(22, 8, 11, 'flesh'),
-      ...wallH(4, 8, 13, 'flesh'),
-      ...wallH(19, 23, 13, 'flesh'),
+      ...wallH(5, 9, 2, 'flesh'),
+      ...wallH(18, 22, 2, 'flesh'),
+      ...blob(9, 5.2, 2.15, 'flesh'),
+      ...blob(18, 5.2, 2.15, 'flesh'),
+      ...wallV(2, 7, 11, 'flesh'),
+      ...wallV(25, 7, 11, 'flesh'),
+      ...wallH(1, 4, 12, 'flesh'),
+      ...wallH(23, 26, 12, 'flesh'),
+      { x: 13, y: 10, wall: 'flesh' }, { x: 14, y: 10, wall: 'flesh' },
+      { x: 12, y: 11, wall: 'flesh' }, { x: 15, y: 11, wall: 'flesh' },
+      { x: 13, y: 12, wall: 'flesh' }, { x: 14, y: 12, wall: 'flesh' },
+      ...wallV(1, 14, 15, 'flesh'),
+      ...wallV(26, 14, 15, 'flesh'),
+      ...wallH(1, 4, 17, 'flesh'),
+      ...wallH(23, 26, 17, 'flesh'),
       { x: 14, y: 9, e: '❤️' }, { x: 3, y: 4, e: '🌹' },
-      { x: 24, y: 17, e: '🎀' },
-      { x: 1, y: 12, e: '💕' }, { x: 26, y: 5, e: '💋' },
-      virus(12, 4, 0), virus(21, 4, 1), virus(14, 12, 2), virus(3, 8, 0),
-      virus(25, 14, 1), virus(9, 14, 2),
-      virus(7, 10, 1, { axis: 'y', min: 8, max: 12, dir: 1, every: 5 }),
-      virus(20, 10, 0, { axis: 'y', min: 8, max: 12, dir: -1, every: 5 }),
-      virus(11, 17, 2, { axis: 'x', min: 8, max: 19, dir: 1, every: 4 }),
-      virus(16, 15, 1, { axis: 'x', min: 12, max: 21, dir: -1, every: 5 }),
+      { x: 24, y: 4, e: '🎀' },
+      { x: 1, y: 13, e: '💕' }, { x: 26, y: 8, e: '💋' },
+      virus(9, 8, 0), virus(18, 8, 1), virus(3, 9, 2),
+      virus(13, 8, 1, { axis: 'x', min: 11, max: 16, dir: 1, every: 8 }),
+      virus(23, 10, 0, { axis: 'x', min: 20, max: 26, dir: -1, every: 8 }),
     ],
-    rivals: 6, rivalSpeed: 0.92,
+    rivals: 2, rivalSpeed: 1.52, rivalSmart: 1.2,
   },
 ];
 
@@ -363,7 +387,7 @@ function flagSkin(id, name, emoji, stripes, head, tip) {
 
 const SKINS = [
   { id: 'naturel', name: 'Le Naturel', unlock: 0,
-    body: '#e2b08c', head: '#d9987a', tip: '#c45c68', detail: 'realistic' },
+    body: '#e8b896', head: '#e09a7a', tip: '#d46a78', detail: 'realistic' },
   { id: 'classic', name: 'Le Classique', unlock: 0,
     body: '#f7a8c0', head: '#f791b4', tip: '#e26a97', detail: null },
   { id: 'banana',  name: 'Banane Royale', unlock: 150,
@@ -472,8 +496,8 @@ const SAVE_KEY = 'zigouigoui-save-v1';
 
 const Save = {
   data: {
-    best: 0, totalScore: 0, unlockedLevel: 1, skin: 'naturel',
-    credits: 0, eatenTotal: 0, unlockedShop: [],
+    best: 0, totalScore: 0, unlockedLevel: 9, skin: 'naturel',
+    credits: 0, eatenTotal: 0, unlockedShop: [], muted: false,
     kit: { capote: 0, sperm: 0, antigrav: 0, pump: 0, puchita: 0 },
   },
   load() {
@@ -483,11 +507,16 @@ const Save = {
     } catch (e) { /* sauvegarde corrompue : on repart de zéro */ }
     if (this.data.credits == null) this.data.credits = 0;
     if (this.data.eatenTotal == null) this.data.eatenTotal = 0;
+    if (this.data.muted == null) this.data.muted = false;
     this.data.kit = Object.assign(
       { capote: 0, sperm: 0, antigrav: 0, pump: 0, puchita: 0 },
       this.data.kit || {},
     );
     if (!Array.isArray(this.data.unlockedShop)) this.data.unlockedShop = [];
+    if ((this.data.unlockedLevel || 1) < LEVELS.length) {
+      this.data.unlockedLevel = LEVELS.length;
+      this.write();
+    }
     /* anciennes sauvegardes : la boutique était déjà ouverte */
     if ((this.data.totalScore || 0) > 0 || (this.data.credits || 0) > 0) {
       for (const id of ['capote', 'sperm', 'antigrav', 'puchita']) {

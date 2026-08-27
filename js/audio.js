@@ -14,17 +14,48 @@ const AudioMan = (() => {
   let scene = {};
   const bufs = {};
 
+  let muted = false;
+  let ducked = false;
+
+  function applyGains(fade) {
+    if (!ctx || !masterGain || !musicGain) return;
+    const t = ctx.currentTime;
+    const master = muted ? 0.0001 : 0.58;
+    const music = muted ? 0.0001 : (ducked ? 0.07 : 0.30);
+    if (fade === false) {
+      masterGain.gain.setValueAtTime(master, t);
+      musicGain.gain.setValueAtTime(music, t);
+      return;
+    }
+    masterGain.gain.setTargetAtTime(master, t, 0.06);
+    musicGain.gain.setTargetAtTime(music, t, 0.08);
+  }
+
+  function setMuted(on) {
+    muted = !!on;
+    if (ctx) applyGains();
+    return muted;
+  }
+
+  function isMuted() { return muted; }
+
+  function duckMusic(on) {
+    ducked = !!on;
+    if (ctx) applyGains();
+  }
+
   function ensureCtx() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       masterGain = ctx.createGain();
-      masterGain.gain.value = 0.58;
+      masterGain.gain.value = muted ? 0.0001 : 0.58;
       masterGain.connect(ctx.destination);
       musicGain = ctx.createGain();
-      musicGain.gain.value = 0.30;
+      musicGain.gain.value = muted ? 0.0001 : 0.30;
       musicGain.connect(masterGain);
     }
     if (ctx.state === 'suspended') ctx.resume();
+    applyGains(false);
     return ctx;
   }
 
@@ -164,6 +195,7 @@ const AudioMan = (() => {
     sauna:    { bpm: 78,  root: 60, scale: [0, 3, 5, 7, 10],      flavor: 'chill' },
     chaos:    { bpm: 112, root: 71, scale: [0, 2, 4, 7, 9, 11],   flavor: 'fantasy' },
     body:     { bpm: 98,  root: 57, scale: [0, 3, 5, 7, 10, 12],  flavor: 'fesse' },
+    menu:     { bpm: 84,  root: 62, scale: [0, 3, 5, 7, 10],      flavor: 'chill' },
   };
 
   function startScene(track) {
@@ -385,10 +417,11 @@ const AudioMan = (() => {
     nextNoteTime = ctx.currentTime + 0.08;
     stepIndex = 0;
     leadNote = 0;
+    ducked = false;
     startScene(track);
     musicGain.gain.cancelScheduledValues(ctx.currentTime);
     musicGain.gain.setValueAtTime(0.001, ctx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(0.30, ctx.currentTime + 0.35);
+    applyGains();
     const stepDur = 60 / track.bpm / 2;
     schedulerId = setInterval(() => {
       while (nextNoteTime < ctx.currentTime + 0.28) {
@@ -462,5 +495,5 @@ const AudioMan = (() => {
     },
   };
 
-  return { startMusic, stopMusic, sfx: SFX, ensureCtx };
+  return { startMusic, stopMusic, sfx: SFX, ensureCtx, setMuted, isMuted, duckMusic };
 })();
