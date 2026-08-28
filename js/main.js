@@ -414,33 +414,51 @@
     });
   }
 
+  let skinIndex = 0;
+
+  function renderSkinCarousel() {
+    const skin = SKINS[skinIndex];
+    const locked = !Save.isSkinUnlocked(skin);
+    const equipped = Save.data.skin === skin.id;
+    const cv = $('skin-preview');
+    Game.drawSkinPreview(cv, skin);
+    if (locked) {
+      const c = cv.getContext('2d');
+      c.save();
+      c.fillStyle = 'rgba(16, 6, 28, .78)';
+      c.fillRect(0, 0, cv.width, cv.height);
+      c.font = '52px "Segoe UI Emoji", sans-serif';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText('🔒', cv.width / 2, cv.height / 2);
+      c.restore();
+    }
+    $('skin-count').textContent = `${skinIndex + 1} / ${SKINS.length}`;
+    $('skin-name').textContent = locked ? '❓ ???' : skin.name;
+    $('skin-status').textContent = locked
+      ? `🔒 ${skin.unlock} pts cumulés pour le débloquer`
+      : (equipped ? '✅ Équipé' : ' ');
+    $('skin-equip').classList.toggle('hidden', locked || equipped);
+  }
+
+  function moveSkin(dir) {
+    skinIndex = (skinIndex + dir + SKINS.length) % SKINS.length;
+    renderSkinCarousel();
+  }
+
+  function equipCurrentSkin() {
+    const skin = SKINS[skinIndex];
+    if (!Save.isSkinUnlocked(skin) || Save.data.skin === skin.id) return;
+    Save.data.skin = skin.id;
+    Save.write();
+    AudioMan.sfx.bonus();
+    renderSkinCarousel();
+  }
+
   function buildSkinGrid() {
-    const grid = $('skin-grid');
-    grid.innerHTML = '';
-    SKINS.forEach(skin => {
-      const locked = !Save.isSkinUnlocked(skin);
-      const card = document.createElement('button');
-      card.className = 'skin-card' + (locked ? ' locked' : '') + (Save.data.skin === skin.id ? ' selected' : '');
-      const cv = document.createElement('canvas');
-      cv.width = 120; cv.height = 60;
-      Game.drawSkinPreview(cv, skin);
-      card.appendChild(cv);
-      const name = document.createElement('span');
-      name.className = 'sk-name';
-      name.textContent = locked ? '❓ ???' : skin.name;
-      card.appendChild(name);
-      const sub = document.createElement('span');
-      sub.className = 'sk-unlock';
-      sub.textContent = locked ? `🔒 ${skin.unlock} pts cumulés` : (Save.data.skin === skin.id ? '✅ équipé' : 'clique pour équiper');
-      card.appendChild(sub);
-      if (!locked) card.addEventListener('click', () => {
-        Save.data.skin = skin.id;
-        Save.write();
-        AudioMan.sfx.click();
-        buildSkinGrid();
-      });
-      grid.appendChild(card);
-    });
+    const found = SKINS.findIndex(s => s.id === Save.data.skin);
+    skinIndex = found >= 0 ? found : 0;
+    renderSkinCarousel();
   }
 
   /* ================= BOUTONS ================= */
@@ -451,6 +469,9 @@
   click('btn-levels', () => { buildLevelGrid(); show('levels'); });
   click('btn-shop', () => openShop({ afterLevel: false }));
   click('btn-skins', () => { buildSkinGrid(); show('skins'); });
+  click('skin-prev', () => moveSkin(-1));
+  click('skin-next', () => moveSkin(1));
+  click('skin-equip', equipCurrentSkin);
   click('btn-fight', beginBossFight);
   click('btn-resume', resumeGame);
   click('btn-quit', toMenu);
@@ -509,6 +530,11 @@
       else if (uiState === 'unlock') dismissShopUnlock();
       e.preventDefault();
       return;
+    }
+    if (uiState === 'skins') {
+      if (e.code === 'ArrowLeft') { AudioMan.sfx.click(); moveSkin(-1); e.preventDefault(); return; }
+      if (e.code === 'ArrowRight') { AudioMan.sfx.click(); moveSkin(1); e.preventDefault(); return; }
+      if (e.code === 'Enter' || e.code === 'Space') { equipCurrentSkin(); e.preventDefault(); return; }
     }
     if (uiState === 'playing' && KEYMAP[e.code]) {
       Game.setDirection(...KEYMAP[e.code]);

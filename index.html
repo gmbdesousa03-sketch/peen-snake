@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=play15">
+<link rel="stylesheet" href="style.css?v=play20">
 </head>
 <body>
 <div id="app">
@@ -60,7 +60,17 @@
     <div id="screen-skins" class="screen hidden">
       <h2 class="screen-title">Garde-robe du Zigouigoui</h2>
       <p class="tagline small">Skins originaux, puis tous les drapeaux — Europe et grand monde.</p>
-      <div id="skin-grid"></div>
+      <div id="skin-carousel">
+        <button id="skin-prev" class="skin-arrow" type="button" title="Skin précédent (←)">◀</button>
+        <div class="skin-stage">
+          <div id="skin-count" class="sk-count">1 / 1</div>
+          <canvas id="skin-preview" width="360" height="170"></canvas>
+          <div id="skin-name" class="sk-big-name">Le Naturel</div>
+          <div id="skin-status" class="sk-big-status">✅ Équipé</div>
+          <button id="skin-equip" class="btn big hidden" type="button">👕 Équiper</button>
+        </div>
+        <button id="skin-next" class="skin-arrow" type="button" title="Skin suivant (→)">▶</button>
+      </div>
       <button class="btn back" data-back>← Retour</button>
     </div>
 
@@ -144,9 +154,9 @@
   </div>
 
 </div>
-<script src="js/audio.js?v=play15"></script>
-<script src="js/data.js?v=play15"></script>
-<script src="js/game.js?v=play15"></script>
-<script src="js/main.js?v=play15"></script>
+<script src="js/audio.js?v=play20"></script>
+<script src="js/data.js?v=play20"></script>
+<script src="js/game.js?v=play20"></script>
+<script src="js/main.js?v=play20"></script>
 </body>
 </html>
