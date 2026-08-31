@@ -21,6 +21,8 @@ html, body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 body::before, body::after {
   content: "";
@@ -66,8 +68,8 @@ body::after {
   max-height: calc(100vh - 16px);
 }
 #stage:has(#hud:not(.hidden)) {
-  width: min(calc(100vw - 16px), calc((100vh - 72px) * 896 / 640));
-  gap: 8px;
+  width: min(calc(100vw - 16px), calc((100vh - 16px) * 896 / 640));
+  gap: 0;
 }
 
 #game-wrap {
@@ -108,56 +110,43 @@ body::after {
   display: block;
 }
 
-/* ===== HUD — barre au-dessus de la map ===== */
+/* ===== HUD — overlay compact sur la map ===== */
 #hud {
-  position: relative;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0;
   pointer-events: none;
-  z-index: 5;
-  flex-shrink: 0;
+  z-index: 8;
 }
 #hud::before { display: none; }
 .hud-left, .hud-right {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .hud-left { flex-direction: row; }
 .hud-right { justify-content: flex-end; }
-.hud-mood {
-  color: #fff;
-  font-size: clamp(12px, 1.6vw, 15px);
-  font-weight: 700;
-  letter-spacing: .02em;
-  line-height: 1.2;
-  opacity: 1;
-  white-space: nowrap;
-  background: rgba(10, 6, 24, .86);
-  border: 2px solid rgba(255,255,255,.4);
-  border-radius: 999px;
-  padding: 4px 12px;
-  text-shadow: 0 1px 2px #000, 0 0 8px rgba(0,0,0,.7);
-}
+.hud-mood { display: none; }
 
 .hud-pill {
-  background: rgba(10, 6, 24, .9);
+  background: rgba(10, 6, 24, .72);
   color: #fff;
-  border: 2px solid rgba(255,255,255,.5);
+  border: 1.5px solid rgba(255,255,255,.4);
   border-radius: 999px;
-  padding: 5px 12px;
-  font-size: clamp(13px, 1.7vw, 18px);
+  padding: 2px 8px;
+  font-size: clamp(10px, 1.5cqi, 13px);
   font-weight: 700;
-  letter-spacing: .02em;
+  letter-spacing: .01em;
   white-space: nowrap;
-  text-shadow: 0 1px 2px #000, 0 0 8px rgba(0,0,0,.65);
-  box-shadow:
-    0 6px 16px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.28);
+  text-shadow: 0 1px 2px #000;
+  box-shadow: 0 3px 10px rgba(0,0,0,.3);
 }
 .hud-pill.score {
   background: linear-gradient(180deg, #ffb0d0, #ff6fa5 55%, #e04c85);
@@ -176,25 +165,25 @@ body::after {
   text-shadow: 0 1px 0 rgba(20, 40, 80, .35);
 }
 
-#hud-bonuses { display: flex; gap: 6px; }
+#hud-bonuses { display: flex; gap: 4px; }
 .bonus-chip {
   display: flex; flex-direction: column; align-items: center;
-  background: rgba(10, 6, 24, .9);
-  border: 2px solid var(--yellow);
-  border-radius: 12px;
-  padding: 4px 10px;
+  background: rgba(10, 6, 24, .75);
+  border: 1.5px solid var(--yellow);
+  border-radius: 8px;
+  padding: 2px 6px;
   color: #fff;
-  font-size: clamp(12px, 1.6vw, 15px);
+  font-size: clamp(9px, 1.3cqi, 11px);
   font-weight: 800;
   text-shadow: 0 1px 2px #000;
   animation: chip-pop .25s ease-out;
 }
 .bonus-chip .bar {
-  width: 40px; height: 5px;
+  width: 28px; height: 3px;
   background: rgba(255,255,255,.25);
   border-radius: 3px;
   overflow: hidden;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .bonus-chip .bar > i {
   display: block; height: 100%;
@@ -565,3 +554,5 @@ body::after {
   box-shadow: 0 6px 16px rgba(0,0,0,.3);
 }
 .mute-btn:hover { transform: scale(1.06); }
+
+

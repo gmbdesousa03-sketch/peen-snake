@@ -1,0 +1,21 @@
+{
+  "appId": "com.zigouigoui.game",
+  "appName": "Zigouigoui",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "ios": {
+    "contentInset": "always",
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#2a1b5c"
+    }
+  }
+}

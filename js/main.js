@@ -54,24 +54,18 @@
 
   function refreshHud() {
     const S = Game.state;
-    $('hud-score').textContent = `Score ${S.score}`;
-    $('hud-best').textContent = `Record ${Save.data.best}`;
+    $('hud-score').textContent = `${S.score}`;
     $('hud-length').textContent = `${snakeCm(S.snake).toFixed(1)} cm`;
     const lives = S.lives || 0;
-    $('hud-lives').textContent = lives ? `Vies ${lives}` : 'Vies 0';
+    const livesEl = $('hud-lives');
+    livesEl.textContent = `💛 ${lives}`;
+    livesEl.classList.toggle('hidden', lives <= 0);
     if (S.mode === 'boss' && S.bossDef) {
       $('hud-level').textContent = `⚔️ ${S.bossDef.name}`;
-      $('hud-goal').textContent = `PV ${S.bossHp}/${S.bossMax}`;
+      $('hud-goal').textContent = `Hits ${S.bossHp}/${S.bossMax}`;
     } else {
       $('hud-level').textContent = `${S.level.emoji} ${S.level.name}`;
-      $('hud-goal').textContent = `Boss ${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
-    }
-    const moodEl = $('hud-mood');
-    if (moodEl && S.level && S.mode !== 'boss' && S.level.soul) {
-      moodEl.textContent = S.level.soul;
-      moodEl.classList.remove('hidden');
-    } else if (moodEl) {
-      moodEl.classList.add('hidden');
+      $('hud-goal').textContent = `${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
     }
   }
 
@@ -216,6 +210,8 @@
     $('boss-title').textContent = `${B.emoji} ${B.name}`;
     $('boss-sub').textContent = `Après ${L.emoji} ${L.name} · ${carry.score} pts · ${snakeCm(carry.snake).toFixed(1)} cm`;
     $('boss-taunt').textContent = `« ${B.taunt} »`;
+    const hits = bossHitsForLevel(currentLevel);
+    $('boss-rule').textContent = `Règle : mords-lui les boules (halo jaune). Niveau ${currentLevel + 1} → ${hits} hit${hits > 1 ? 's' : ''}. Le reste du corps ne compte pas.`;
     showToast('⚔️ Le boss est là. Tu gardes tout ce que tu as gagné.');
     AudioMan.stopMusic();
     show('boss');

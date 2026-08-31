@@ -240,7 +240,8 @@ const Game = (() => {
     S.bossDef = BOSSES[levelIndex];
     S.mode = 'boss';
     S.running = true; S.paused = false; S.dying = false;
-    S.bossHp = S.bossDef.hp; S.bossMax = S.bossDef.hp;
+    const hits = bossHitsForLevel(levelIndex);
+    S.bossHp = hits; S.bossMax = hits;
     S.graceUntil = now() + 2000;
     S.particles = []; S.shake = 0;
     S.classicCleared = true; S.bossReady = true;
@@ -2113,9 +2114,9 @@ const Game = (() => {
   }
 
   const MEAN_PUCHITA = [
-    { body: '#d1607a', lip: '#a83a54', inner: '#6e1e34', glow: '#e45a86', hair: '#4a2030' },   // Furax — rouge, irritée
-    { body: '#a06ab8', lip: '#784098', inner: '#481e66', glow: '#b44cff', hair: '#341a44' },   // Jalouse — violette, cernée
-    { body: '#9aa860', lip: '#6e7c3a', inner: '#42501c', glow: '#8ecb3a', hair: '#2e3a14' },   // Toxique — verte, contaminée
+    { skin: '#f4d8c6', lip: '#e89a92', inner: '#c24e62', hood: '#efc8b6', hair: '#7a5440', glow: '#f0c8b4' }, // pâle
+    { skin: '#a86c42', lip: '#8a4a32', inner: '#6e2a28', hood: '#b87a50', hair: '#2a1810', glow: '#c08048' }, // marron
+    { skin: '#3a241c', lip: '#2a1612', inner: '#1a0c0c', hood: '#4a3026', hair: '#0c0808', glow: '#5a3c30' }, // ébène
   ];
 
   function drawPuchitaFigure(cx, cy, t, opts) {
@@ -2252,175 +2253,169 @@ const Game = (() => {
     ctx.restore();
   }
 
-  /* Puchitas méchantes : des vulves malades et épuisées */
+  /* Puchitas méchantes : vulves cartoon, carnations pâle / marron / ébène */
   function drawMeanPuchita(cx, cy, variant, t, mobile) {
     const pal = MEAN_PUCHITA[variant] || MEAN_PUCHITA[0];
-    const sc = 1.46;
-    // respiration lente et lourde + léger affaissement : elles sont à bout
-    const breathe = 1 + Math.sin(t / 460 + variant * 2.1) * 0.035;
-    const sag = Math.max(0, Math.sin(t / 900 + variant)) * 1.5;
-    const rx = CELL * 0.30 * sc * breathe;
-    const ry = CELL * 0.46 * sc;
+    const sc = 1.52;
+    const breathe = 1 + Math.sin(t / 480 + variant * 2.1) * 0.03;
+    const sag = Math.max(0, Math.sin(t / 900 + variant)) * 1.2;
+    const rx = CELL * 0.36 * sc * breathe;
+    const ry = CELL * 0.56 * sc;
     cy += sag;
 
-    ctx.save();
-
-    // vapeurs de maladie qui s'échappent
-    ctx.strokeStyle = pal.inner;
-    ctx.lineCap = 'round';
-    for (let i = -1; i <= 1; i++) {
-      const drift = (t / 22 + i * 30 + variant * 14) % 46;
-      ctx.globalAlpha = 0.5 * (1 - drift / 46);
-      ctx.lineWidth = 2.4;
+    const vulva = (w, h) => {
       ctx.beginPath();
-      ctx.moveTo(cx + i * 9, cy - ry - 4 - drift * 0.3);
-      ctx.quadraticCurveTo(cx + i * 9 + 5, cy - ry - 12 - drift * 0.3, cx + i * 9, cy - ry - 20 - drift * 0.3);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+      ctx.moveTo(cx, cy - h);
+      ctx.bezierCurveTo(cx + w * 1.08, cy - h * 0.58, cx + w * 1.18, cy + h * 0.22, cx + w * 0.16, cy + h * 0.94);
+      ctx.quadraticCurveTo(cx, cy + h * 1.08, cx - w * 0.16, cy + h * 0.94);
+      ctx.bezierCurveTo(cx - w * 1.18, cy + h * 0.22, cx - w * 1.08, cy - h * 0.58, cx, cy - h);
+      ctx.closePath();
+    };
 
-    drawBlobShadow(cx, cy, rx * 1.6);
+    ctx.save();
+    drawBlobShadow(cx, cy + 2, rx * 1.55);
 
     ctx.shadowColor = pal.glow;
-    ctx.shadowBlur = mobile ? 16 : 10;
+    ctx.shadowBlur = mobile ? 14 : 8;
 
-    // contour encre
+    // contour encre, silhouette de vulve
     ctx.fillStyle = '#241428';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx * 1.36, ry * 1.14, 0, 0, Math.PI * 2);
+    vulva(rx * 1.12, ry * 1.08);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // grandes lèvres — teint terne de malade
-    const g = ctx.createRadialGradient(cx - rx * 0.4, cy - ry * 0.35, rx * 0.15, cx, cy + ry * 0.1, ry * 1.25);
-    g.addColorStop(0, lift(pal.body, 0.4));
-    g.addColorStop(0.55, pal.body);
-    g.addColorStop(1, pal.lip);
+    // grandes lèvres
+    const g = ctx.createRadialGradient(cx - rx * 0.25, cy - ry * 0.35, rx * 0.1, cx, cy + ry * 0.15, ry * 1.2);
+    g.addColorStop(0, lift(pal.skin, 0.35));
+    g.addColorStop(0.45, pal.skin);
+    g.addColorStop(1, lift(pal.skin, -0.28));
     ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx * 1.24, ry * 1.04, 0, 0, Math.PI * 2);
+    vulva(rx, ry);
     ctx.fill();
 
-    // plis latéraux des grandes lèvres
-    ctx.strokeStyle = 'rgba(36, 20, 40, .35)';
-    ctx.lineWidth = 2;
+    // deux grandes lèvres bien séparées (pas un blob)
     for (const side of [-1, 1]) {
+      ctx.fillStyle = '#241428';
       ctx.beginPath();
-      ctx.moveTo(cx + side * rx * 0.95, cy - ry * 0.5);
-      ctx.quadraticCurveTo(cx + side * rx * 1.18, cy, cx + side * rx * 0.95, cy + ry * 0.55);
-      ctx.stroke();
+      ctx.ellipse(cx + side * rx * 0.46, cy + ry * 0.04, rx * 0.62, ry * 0.92, side * 0.22, 0, Math.PI * 2);
+      ctx.fill();
     }
+    ctx.shadowBlur = 0;
+
+    for (const side of [-1, 1]) {
+      const lg = ctx.createRadialGradient(
+        cx + side * rx * 0.22, cy - ry * 0.28, rx * 0.06,
+        cx + side * rx * 0.5, cy + ry * 0.12, rx * 0.9
+      );
+      lg.addColorStop(0, lift(pal.skin, 0.38));
+      lg.addColorStop(0.45, pal.skin);
+      lg.addColorStop(1, lift(pal.skin, -0.22));
+      ctx.fillStyle = lg;
+      ctx.beginPath();
+      ctx.ellipse(cx + side * rx * 0.44, cy + ry * 0.04, rx * 0.54, ry * 0.86, side * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // sillon central
+    ctx.strokeStyle = 'rgba(36, 20, 40, .45)';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - ry * 0.72);
+    ctx.quadraticCurveTo(cx + Math.sin(t / 520 + variant) * 1.2, cy + ry * 0.08, cx, cy + ry * 0.82);
+    ctx.stroke();
 
     // petites lèvres
     ctx.fillStyle = pal.lip;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + ry * 0.05, rx * 0.6, ry * 0.76, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx, cy - ry * 0.42);
+    ctx.bezierCurveTo(cx + rx * 0.38, cy - ry * 0.08, cx + rx * 0.32, cy + ry * 0.38, cx, cy + ry * 0.62);
+    ctx.bezierCurveTo(cx - rx * 0.32, cy + ry * 0.38, cx - rx * 0.38, cy - ry * 0.08, cx, cy - ry * 0.42);
     ctx.fill();
     ctx.fillStyle = pal.inner;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + ry * 0.08, rx * 0.3, ry * 0.6, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx, cy - ry * 0.22);
+    ctx.bezierCurveTo(cx + rx * 0.18, cy + ry * 0.02, cx + rx * 0.16, cy + ry * 0.32, cx, cy + ry * 0.48);
+    ctx.bezierCurveTo(cx - rx * 0.16, cy + ry * 0.32, cx - rx * 0.18, cy + ry * 0.02, cx, cy - ry * 0.22);
     ctx.fill();
 
-    // fente centrale, un peu de travers tellement elle est crevée
-    ctx.strokeStyle = '#241428';
-    ctx.lineWidth = 2.6;
+    // vestibule
+    ctx.fillStyle = lift(pal.inner, -0.25);
     ctx.beginPath();
-    ctx.moveTo(cx, cy - ry * 0.42);
-    ctx.quadraticCurveTo(cx + Math.sin(t / 500 + variant) * 1.5, cy + ry * 0.15, cx, cy + ry * 0.66);
-    ctx.stroke();
+    ctx.ellipse(cx, cy + ry * 0.18, rx * 0.1, ry * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // clito fatigué
-    drawSphere(cx, cy - ry * 0.52, rx * 0.2, lift(pal.body, 0.3), { shadow: false, rim: true });
+    // capuchon + clito
+    ctx.fillStyle = pal.hood;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - ry * 0.58, rx * 0.28, ry * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    drawSphere(cx, cy - ry * 0.52, rx * 0.16, pal.lip, { shadow: false, rim: true });
 
-    // yeux mi-clos, cernés, pupilles tombantes
+    // reflet de volume
+    ctx.fillStyle = 'rgba(255,255,255,.28)';
+    ctx.beginPath();
+    ctx.ellipse(cx - rx * 0.42, cy - ry * 0.18, rx * 0.22, ry * 0.14, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // yeux fatigués, collés sur les grandes lèvres
     for (const side of [-1, 1]) {
-      const ex = cx + side * rx * 0.88;
-      const ey = cy - ry * 0.3;
-      const er = rx * 0.28;
+      const ex = cx + side * rx * 0.52;
+      const ey = cy - ry * 0.12;
+      const er = rx * 0.22;
       ctx.fillStyle = '#241428';
-      ctx.beginPath(); ctx.ellipse(ex, ey, er + 1.4, er * 0.9 + 1.4, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#f2e8e0';
-      ctx.beginPath(); ctx.ellipse(ex, ey, er, er * 0.9, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(ex, ey, er + 1.2, er * 0.82 + 1.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f4ece4';
+      ctx.beginPath(); ctx.ellipse(ex, ey, er, er * 0.78, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#2a1a2a';
-      ctx.beginPath(); ctx.arc(ex, ey + er * 0.3, er * 0.42, 0, Math.PI * 2); ctx.fill();
-      // paupière lourde à moitié fermée
-      ctx.fillStyle = pal.body;
+      ctx.beginPath(); ctx.arc(ex, ey + er * 0.28, er * 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = pal.skin;
       ctx.beginPath();
-      ctx.ellipse(ex, ey - er * 0.55, er + 1.2, er * 0.75, 0, Math.PI, Math.PI * 2);
+      ctx.ellipse(ex, ey - er * 0.52, er + 1, er * 0.7, 0, Math.PI, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#241428';
-      ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.moveTo(ex - er, ey - er * 0.2); ctx.lineTo(ex + er, ey - er * 0.2); ctx.stroke();
-      // sourcil agacé
-      ctx.beginPath();
-      ctx.moveTo(ex - side * er * 1.1, ey - er * 1.5);
-      ctx.lineTo(ex + side * er * 0.8, ey - er * 0.9);
-      ctx.stroke();
-      // cerne
-      ctx.strokeStyle = 'rgba(50, 20, 45, .6)';
       ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(ex, ey + er * 0.55, er * 0.75, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex - er, ey - er * 0.18); ctx.lineTo(ex + er, ey - er * 0.18); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ex - side * er * 0.9, ey - er * 1.35);
+      ctx.lineTo(ex + side * er * 0.7, ey - er * 0.85);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(40, 16, 28, .45)';
+      ctx.beginPath(); ctx.arc(ex, ey + er * 0.5, er * 0.7, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
     }
 
-    // signes distinctifs par variante
     if (variant === 0) {
-      // Furax : pansement + marques d'irritation
       ctx.save();
-      ctx.translate(cx - rx * 0.85, cy + ry * 0.42);
-      ctx.rotate(-0.5);
-      ctx.fillStyle = '#e8c9a0';
-      ctx.fillRect(-7, -2.6, 14, 5.2);
-      ctx.fillStyle = 'rgba(160, 110, 70, .5)';
-      ctx.fillRect(-2.4, -2.6, 4.8, 5.2);
+      ctx.translate(cx - rx * 0.72, cy + ry * 0.38);
+      ctx.rotate(-0.45);
+      ctx.fillStyle = '#ead2b0';
+      ctx.fillRect(-6.5, -2.3, 13, 4.6);
+      ctx.fillStyle = 'rgba(150, 100, 60, .5)';
+      ctx.fillRect(-2.2, -2.3, 4.4, 4.6);
       ctx.restore();
-      ctx.strokeStyle = 'rgba(255, 90, 90, .7)';
-      ctx.lineWidth = 1.4;
-      for (let i = 0; i < 3; i++) {
-        const ax = cx + rx * (0.55 + i * 0.18), ay = cy + ry * (0.35 + i * 0.1);
-        ctx.beginPath(); ctx.moveTo(ax - 2, ay - 2); ctx.lineTo(ax + 2, ay + 2); ctx.stroke();
-      }
     } else if (variant === 1) {
-      // Jalouse : larme qui coule
       const fall = (t / 700) % 1;
       ctx.fillStyle = 'rgba(140, 200, 255, .85)';
       ctx.beginPath();
-      ctx.ellipse(cx - rx * 0.88, cy - ry * 0.05 + fall * ry * 0.5, 2, 3.2, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx - rx * 0.52, cy + ry * 0.08 + fall * ry * 0.4, 1.8, 2.8, 0, 0, Math.PI * 2);
       ctx.fill();
-    } else {
-      // Toxique : bulles verdâtres qui remontent
-      for (let i = 0; i < 3; i++) {
-        const bo = (t / 500 + i * 0.33) % 1;
-        ctx.globalAlpha = 0.6 * (1 - bo);
-        ctx.fillStyle = '#b8e86a';
-        ctx.beginPath();
-        ctx.arc(cx + (i - 1) * rx * 0.7, cy - ry - bo * 14, 2 + i, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
     }
 
-    // goutte de sueur froide
-    const sweat = (t / 800 + variant * 0.4) % 1;
-    ctx.fillStyle = 'rgba(160, 220, 255, .75)';
-    ctx.beginPath();
-    ctx.ellipse(cx + rx * 1.15, cy - ry * 0.55 + sweat * ry * 0.7, 2.2, 3.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // poils du dessus, tout raplapla
+    // touffe de poils au-dessus
     ctx.strokeStyle = pal.hair;
-    ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
-    for (let i = -2; i <= 2; i++) {
-      const hx = cx + i * rx * 0.32;
+    ctx.lineWidth = 1.7;
+    for (let i = -3; i <= 3; i++) {
+      const hx = cx + i * rx * 0.16;
+      const curl = (i % 2 === 0 ? 1 : -1);
       ctx.beginPath();
-      ctx.moveTo(hx, cy - ry * 0.98);
-      ctx.quadraticCurveTo(hx + 3, cy - ry * 1.2, hx + 6 + i, cy - ry * 1.1 + Math.abs(i));
+      ctx.moveTo(hx, cy - ry * 0.92);
+      ctx.quadraticCurveTo(hx + curl * 4, cy - ry * 1.18, hx + curl * 2, cy - ry * 1.28);
       ctx.stroke();
     }
 
     ctx.restore();
     const short = ['Furax', 'Jalouse', 'Toxique'][variant] || 'Furax';
-    drawNameTag(short, cx, cy + CELL * 0.52);
+    drawNameTag(short, cx, cy + CELL * 0.58);
   }
 
   function drawPuchita(t) {

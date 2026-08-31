@@ -1,0 +1,26 @@
+{
+  "name": "zigouigoui",
+  "version": "1.0.0",
+  "description": "ZIGOUIGOUI — en quête de sa Puchita",
+  "main": "electron/main.js",
+  "author": "Zigouigoui",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "npx --yes http-server . -p 8642 -c-1",
+    "pc": "electron .",
+    "pack": "node scripts/pack-web.js",
+    "android": "npm run pack && npx cap sync android",
+    "android:open": "npm run android && npx cap open android",
+    "ios": "npm run pack && npx cap sync ios",
+    "ios:open": "npm run ios && npx cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1",
+    "electron": "^33.4.11"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/ios": "^6.2.1"
+  }
+}

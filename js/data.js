@@ -338,15 +338,19 @@ const LEVELS = [
 ];
 
 /* ---- BOSS : un zigouigoui rival avant chaque niveau ---- */
+function bossHitsForLevel(levelIndex) {
+  return Math.max(1, (levelIndex || 0) + 1);
+}
+
 const BOSSES = [
   { name: 'Toto la Douche', taunt: 'Cette cabine est à MOI. Dégage, minus.',
     hp: 1, length: 8, speedMul: 1.28, smart: 0.12, emoji: '🚿',
     skin: { body: '#7ad0de', head: '#5bb8c8', tip: '#3a8a9a', detail: null } },
   { name: 'Le Bronzé Infidèle', taunt: 'La plage, c’est mon territoire. Bronzage obligatoire.',
-    hp: 3, length: 9, speedMul: 1.16, smart: 0.30, emoji: '🌴',
+    hp: 2, length: 9, speedMul: 1.16, smart: 0.30, emoji: '🌴',
     skin: { body: '#d08a4a', head: '#c07438', tip: '#a04e2a', detail: null } },
   { name: 'King du Vestiaire', taunt: 'VIP only. Toi, tu restes à la porte.',
-    hp: 4, length: 10, speedMul: 1.06, smart: 0.48, emoji: '🕶️',
+    hp: 3, length: 10, speedMul: 1.06, smart: 0.48, emoji: '🕶️',
     skin: { body: '#5a3d7a', head: '#7b52a8', tip: '#c94b9a', detail: null } },
   { name: 'Sire Queue-en-Fer', taunt: 'Nul ne passe le donjon sans se mesurer à moi.',
     hp: 4, length: 11, speedMul: 0.98, smart: 0.64, emoji: '⚔️',
@@ -355,16 +359,16 @@ const BOSSES = [
     hp: 5, length: 12, speedMul: 0.90, smart: 0.82, emoji: '👽',
     skin: { body: '#7cff6b', head: '#4ad89a', tip: '#d4ff4a', detail: null } },
   { name: 'Chef Gros-Bras', taunt: 'Hors de MA cuisine, saucisse crue.',
-    hp: 5, length: 12, speedMul: 0.94, smart: 0.78, emoji: '👨‍🍳',
+    hp: 6, length: 12, speedMul: 0.94, smart: 0.78, emoji: '👨‍🍳',
     skin: { body: '#e8d8c0', head: '#d4c4a8', tip: '#c45c3a', detail: null } },
   { name: 'Sven la Serviette', taunt: 'Trop habillé pour le sauna. Honte à toi.',
-    hp: 5, length: 13, speedMul: 0.88, smart: 0.86, emoji: '🧖‍♂️',
+    hp: 7, length: 13, speedMul: 0.88, smart: 0.86, emoji: '🧖‍♂️',
     skin: { body: '#d4a078', head: '#c48860', tip: '#a06040', detail: null } },
   { name: 'LE GRAND CHAOS', taunt: 'Je suis tous les autres. D’un coup. Désolé.',
-    hp: 5, length: 14, speedMul: 0.80, smart: 1.0, emoji: '👹',
+    hp: 8, length: 14, speedMul: 0.80, smart: 1.0, emoji: '👹',
     skin: { body: '#4a1020', head: '#7a1830', tip: '#ff3a5a', detail: null } },
   { name: 'Cupidon Jaloux', taunt: 'Ce corps, c’est MON temple. Dégage, vers.',
-    hp: 6, length: 15, speedMul: 0.76, smart: 1.05, emoji: '💘',
+    hp: 9, length: 15, speedMul: 0.76, smart: 1.05, emoji: '💘',
     skin: { body: '#ff8ab8', head: '#ff6fa5', tip: '#e04888', detail: null } },
 ];
 
