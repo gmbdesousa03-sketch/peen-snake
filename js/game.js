@@ -46,6 +46,8 @@ const Game = (() => {
     graceUntil: 0,
     classicCleared: false,
     bossReady: false,
+    rivalKills: 0,
+    rivalKillsNeeded: 0,
     antigrav: false,
     spermShots: 0,
     shots: [],
@@ -126,6 +128,8 @@ const Game = (() => {
     S.nextHeartAt = progress ? (progress.nextHeartAt || HEART_EVERY) : HEART_EVERY;
     S.mode = 'level'; S.bossDef = null; S.bossHp = 0; S.bossMax = 0;
     S.classicCleared = false; S.bossReady = false;
+    S.rivalKills = 0;
+    S.rivalKillsNeeded = S.level.bossAfterRivals ? (S.level.rivals || 0) : 0;
     S.graceUntil = now() + 2800;
     S.obstacles = S.level.obstacles.map(o => ({ ...o, move: o.move ? { ...o.move } : null }));
     rebuildObstacleSet();
@@ -295,7 +299,12 @@ const Game = (() => {
 
   function maybeUnlockBoss() {
     if (S.mode !== 'level' || S.bossReady || S.dying || !S.running || S.paused || S.holdBoss) return;
-    if (levelPoints() < (S.level.goal || 0) || S.holdBoss) return;
+    const need = S.rivalKillsNeeded || 0;
+    if (need > 0) {
+      if ((S.rivalKills || 0) < need) return;
+    } else if (levelPoints() < (S.level.goal || 0)) {
+      return;
+    }
     S.bossReady = true;
     S.classicCleared = true;
     S.running = false;
@@ -317,25 +326,63 @@ const Game = (() => {
     };
   }
 
+  function rivalLaneFree(x, y, dir, length) {
+    for (let i = 0; i < length; i++) {
+      const px = Math.max(0, Math.min(COLS - 1, x - dir.x * i));
+      const py = Math.max(0, Math.min(ROWS - 1, y - dir.y * i));
+      if (S.obstacleSet.has(key(px, py))) return false;
+      if (S.snake.some(p => p.x === px && p.y === py)) return false;
+      for (const r of S.rivals) {
+        if (r.body.some(p => p.x === px && p.y === py)) return false;
+      }
+    }
+    return true;
+  }
+
   function spawnRivalsForLevel() {
     S.rivals = [];
     const n = S.level.rivals || 0;
-    const yMin = 2, yMax = ROWS - 6;
+    const yMin = 2, yMax = ROWS - 5;
     for (let i = 0; i < n; i++) {
       const length = n <= 2 ? 7 + i : 5 + Math.min(i, 4);
-      let x = COLS - length;
-      let y = n <= 1 ? 5 : Math.round(yMin + i * (yMax - yMin) / Math.max(1, n - 1));
-      if (y >= 15) y = 12;
-      for (let tries = 0; tries < 50; tries++) {
-        if (y >= 15) y = 12;
-        if (!S.obstacleSet.has(key(x, y)) && !S.obstacleSet.has(key(x + 1, y))) break;
-        y = yMin + ((y - yMin + 2) % (yMax - yMin + 1));
+      const fromRight = i % 2 === 0;
+      const dir = fromRight ? { x: -1, y: 0 } : { x: 1, y: 0 };
+      let placed = null;
+      const preferredY = n === 2
+        ? (i === 0 ? [13, 14, 6, 8, 10, 11] : [15, 14, 11, 7, 5, 9])
+        : null;
+      const ys = preferredY
+        ? preferredY.concat([...Array(yMax - yMin + 1).keys()].map(k => yMin + k))
+        : [...Array(yMax - yMin + 1).keys()].map(k => yMin + ((i * 3 + k) % (yMax - yMin + 1)));
+      const xs = fromRight
+        ? [19, 18, 17, 16, 15, 20, COLS - 4]
+        : [8, 7, 9, 6, 10, 5, 3];
+      outer:
+      for (const y of ys) {
+        if (y === 16) continue;
+        for (const x of xs) {
+          if (rivalLaneFree(x, y, dir, length)) { placed = { x, y, dir }; break outer; }
+        }
       }
+      if (!placed) {
+        outer2:
+        for (let y = yMin; y <= yMax; y++) {
+          for (let x = 2; x <= COLS - 3; x++) {
+            for (const tryDir of [{ x: -1, y: 0 }, { x: 1, y: 0 }]) {
+              if (rivalLaneFree(x, y, tryDir, length)) {
+                placed = { x, y, dir: tryDir };
+                break outer2;
+              }
+            }
+          }
+        }
+      }
+      if (!placed) continue;
       const smart = S.level.rivalSmart != null
         ? S.level.rivalSmart
         : 0.15 + S.levelIndex * 0.12;
       S.rivals.push(makeRival({
-        x, y, dir: { x: -1, y: 0 },
+        x: placed.x, y: placed.y, dir: placed.dir,
         length,
         interval: S.stepInterval * (S.level.rivalSpeed || 1.3),
         skin: RIVAL_SKINS[i % RIVAL_SKINS.length],
@@ -344,6 +391,7 @@ const Game = (() => {
         smart,
       }));
     }
+    if (S.rivalKillsNeeded) S.rivalKillsNeeded = S.rivals.length;
   }
 
   function stop() { S.running = false; }
@@ -875,8 +923,10 @@ const Game = (() => {
     }
     burst(r.body[0], ['💥', '⭐']);
     S.rivals = S.rivals.filter(x => x !== r);
+    S.rivalKills = (S.rivalKills || 0) + 1;
     const pts = addPoints(PTS.rival);
     emit('RivalKill', { name: r.name, pts });
+    emit('goal');
   }
 
   function hurtBoss(amount, cell) {
@@ -1074,8 +1124,10 @@ const Game = (() => {
     burst(head, ['💕', '💥', '✨']);
     AudioMan.sfx.hit();
     S.rivals = S.rivals.filter(x => x !== r);
+    S.rivalKills = (S.rivalKills || 0) + 1;
     const pts = addPoints(PTS.rival);
     emit('PuchitaKill', { name: r.name, pts });
+    emit('goal');
   }
 
   function sacrificePuchita() {

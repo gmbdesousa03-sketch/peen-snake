@@ -96,6 +96,9 @@
     if (S.mode === 'boss' && S.bossDef) {
       $('hud-level').textContent = `⚔️ ${S.bossDef.name}`;
       $('hud-goal').textContent = `Hits ${S.bossHp}/${S.bossMax}`;
+    } else if (S.rivalKillsNeeded) {
+      $('hud-level').textContent = `${S.level.emoji} ${S.level.name}`;
+      $('hud-goal').textContent = `Rivaux ${S.rivalKills || 0}/${S.rivalKillsNeeded}`;
     } else {
       $('hud-level').textContent = `${S.level.emoji} ${S.level.name}`;
       $('hud-goal').textContent = `${Math.max(0, S.score - (S.scoreAtLevelStart || 0))}/${S.level.goal}`;
@@ -183,7 +186,13 @@
       onGoldHeart: () => showToast('💛 Un cœur d’or ! Ramasse-le pour une vie.'),
       onLifeUp: () => showToast('💛 +1 vie !'),
       onSavedBoss: () => showToast('🛡️ La capote a encaissé le coup du boss !'),
-      onRivalKill: ({ name, pts }) => showToast(`💥 ${name} à terre. +${pts} pts`),
+      onRivalKill: ({ name, pts }) => {
+        const S = Game.state;
+        const left = Math.max(0, (S.rivalKillsNeeded || 0) - (S.rivalKills || 0));
+        showToast(left > 0
+          ? `💥 ${name} à terre. +${pts} pts · encore ${left}`
+          : `💥 ${name} à terre. +${pts} pts`);
+      },
       onPuchitaHello: () => showToast('💕 hello boys'),
       onPuchitaKill: ({ name, pts }) => showToast(`💕 Puchita a descendu ${name} ! +${pts} pts`),
       onPuchitaBye: () => showToast('💕 Puchita a pris le coup. Quelle héroïne.'),

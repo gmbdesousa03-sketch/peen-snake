@@ -1,13 +1,13 @@
-const CACHE = 'zigouigoui-v33';
+const CACHE = 'zigouigoui-v34';
 const ASSETS = [
   './',
   './index.html',
-  './style.css?v=play33',
-  './js/audio.js?v=play33',
-  './js/data.js?v=play33',
-  './js/ads.js?v=play33',
-  './js/game.js?v=play33',
-  './js/main.js?v=play33',
+  './style.css?v=play34',
+  './js/audio.js?v=play34',
+  './js/data.js?v=play34',
+  './js/ads.js?v=play34',
+  './js/game.js?v=play34',
+  './js/main.js?v=play34',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

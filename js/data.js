@@ -302,7 +302,7 @@ const LEVELS = [
     music: 'body', speed: 8.2, goal: 920,
     bg: ['#f3c4b0', '#e8a090'], deco: 'body',
     soul: 'Battement intime',
-    mood: 'Peau chaude. Elle respire encore. Tu es trop petit.',
+    mood: 'Deux gardiens. Ensuite, le temple. Mords-leur les boules.',
     aura: '#ff7aa8', vig: 'rgba(90, 20, 40, .42)',
     obstacles: [
       ...wallH(5, 9, 2, 'flesh'),
@@ -327,7 +327,7 @@ const LEVELS = [
       virus(13, 8, 1, { axis: 'x', min: 11, max: 16, dir: 1, every: 8 }),
       virus(23, 10, 0, { axis: 'x', min: 20, max: 26, dir: -1, every: 8 }),
     ],
-    rivals: 2, rivalSpeed: 1.52, rivalSmart: 1.2,
+    rivals: 2, rivalSpeed: 1.35, rivalSmart: 0.85, bossAfterRivals: true,
   },
 ];
 
