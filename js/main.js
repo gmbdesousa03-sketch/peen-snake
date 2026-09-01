@@ -21,6 +21,23 @@
 
   /* ================= NAVIGATION ÉCRANS ================= */
 
+  function isTouchPlay() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) ||
+      window.matchMedia('(pointer: coarse)').matches;
+  }
+
+  function syncPlayControls() {
+    const playing = uiState === 'playing';
+    const pad = $('touch-pad');
+    const pauseBtn = $('btn-pause-hud');
+    const showPad = playing && isTouchPlay();
+    if (pad) {
+      pad.classList.toggle('hidden', !showPad);
+      pad.setAttribute('aria-hidden', showPad ? 'false' : 'true');
+    }
+    if (pauseBtn) pauseBtn.classList.toggle('hidden', !playing);
+  }
+
   function show(name) {
     Object.values(screens).forEach(s => s.classList.add('hidden'));
     if (name && screens[name]) screens[name].classList.remove('hidden');
@@ -30,6 +47,7 @@
       $('btn-shoot').classList.add('hidden');
       $('btn-puchita').classList.add('hidden');
     }
+    syncPlayControls();
   }
 
   function toMenu() {
@@ -371,7 +389,9 @@
 
   let hintTimer = null;
   function showPlayHint() {
-    showToast('➡️ Flèches pour bouger · ramasse le bonus qui brille');
+    showToast(isTouchPlay()
+      ? '📱 Croix ou swipe pour diriger · ramasse le bonus qui brille'
+      : '➡️ Flèches pour bouger · ramasse le bonus qui brille');
   }
 
   function syncMuteBtn() {
@@ -489,6 +509,21 @@
   $('btn-puchita').addEventListener('click', e => {
     e.stopPropagation();
     Game.callPuchita();
+  });
+  $('btn-pause-hud').addEventListener('click', e => {
+    e.stopPropagation();
+    pauseGame();
+  });
+  document.querySelectorAll('#touch-pad .pad-btn').forEach(btn => {
+    const steer = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (uiState !== 'playing') return;
+      const [x, y] = (btn.dataset.dir || '0,0').split(',').map(Number);
+      Game.setDirection(x, y);
+    };
+    btn.addEventListener('pointerdown', steer);
+    btn.addEventListener('click', steer);
   });
   document.querySelectorAll('[data-back]').forEach(b =>
     b.addEventListener('click', () => { AudioMan.sfx.click(); toMenu(); }));
@@ -611,19 +646,22 @@
   /* ================= TACTILE (swipe) ================= */
 
   let touchStart = null;
-  const wrap = $('game-wrap');
-  wrap.addEventListener('touchstart', e => {
+  document.addEventListener('touchstart', e => {
+    if (uiState !== 'playing' || !e.touches[0]) return;
+    if (e.target.closest('.pad-btn, .pause-hud-btn, .mute-btn, .action-btn')) return;
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: true });
-  wrap.addEventListener('touchmove', e => {
+  document.addEventListener('touchmove', e => {
     if (!touchStart || uiState !== 'playing') return;
+    if (e.cancelable) e.preventDefault();
     const dx = e.touches[0].clientX - touchStart.x;
     const dy = e.touches[0].clientY - touchStart.y;
-    if (Math.hypot(dx, dy) < 24) return;
+    if (Math.hypot(dx, dy) < 18) return;
     if (Math.abs(dx) > Math.abs(dy)) Game.setDirection(Math.sign(dx), 0);
     else Game.setDirection(0, Math.sign(dy));
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }, { passive: true });
+  }, { passive: false });
+  document.addEventListener('touchend', () => { touchStart = null; }, { passive: true });
 
   /* ================= DÉMARRAGE ================= */
 

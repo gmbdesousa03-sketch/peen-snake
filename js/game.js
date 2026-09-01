@@ -125,7 +125,7 @@ const Game = (() => {
     S.nextHeartAt = progress ? (progress.nextHeartAt || HEART_EVERY) : HEART_EVERY;
     S.mode = 'level'; S.bossDef = null; S.bossHp = 0; S.bossMax = 0;
     S.classicCleared = false; S.bossReady = false;
-    S.graceUntil = now() + 1800;
+    S.graceUntil = now() + 2800;
     S.obstacles = S.level.obstacles.map(o => ({ ...o, move: o.move ? { ...o.move } : null }));
     rebuildObstacleSet();
     S.stars = Array.from({ length: 60 }, () => ({
@@ -508,19 +508,20 @@ const Game = (() => {
   function collectMeanPuchita(o, alreadyGrew) {
     const name = VIRUS_NAMES[o.virus] || 'Puchita';
     if (alreadyGrew) shrinkBy(1);
-    if (!hasEffect('invincible')) {
-      shrinkBy(1);
-      S.shake = 0.35;
-      AudioMan.sfx.hit();
-      burst({ x: o.x, y: o.y }, ['☠️', '💚', '💨']);
-      emit('length');
-      if (S.snake.length < 2 || snakeCm(S.snake) <= 0) {
-        die('puchita', name);
-        if (!S.dying) ensureMinLength();
-        return false;
-      }
-      emit('Grow', { grow: -0.5, name, emoji: '☠️', toast: true });
+    if (hasEffect('invincible') || now() < S.graceUntil) return false;
+    shrinkBy(1);
+    S.shake = 0.35;
+    S.effects.invincible = now() + 900;
+    AudioMan.sfx.hit();
+    burst({ x: o.x, y: o.y }, ['☠️', '💚', '💨']);
+    emit('length');
+    emit('effects');
+    if (S.snake.length < 2 || snakeCm(S.snake) <= 0) {
+      die('puchita', name);
+      if (!S.dying) ensureMinLength();
+      return false;
     }
+    emit('Grow', { grow: -0.5, name, emoji: '☠️', toast: true });
     return false;
   }
 
@@ -699,7 +700,7 @@ const Game = (() => {
 
     // murs
     if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) {
-      if (S.antigrav || hasEffect('invincible')) {
+      if (S.antigrav || hasEffect('invincible') || now() < S.graceUntil) {
         nx = (nx + COLS) % COLS; ny = (ny + ROWS) % ROWS;
       } else { die('mur'); return; }
     }
@@ -711,7 +712,10 @@ const Game = (() => {
     const hitPack = !hitVirus && !hitProp ? packAt(nx, ny) : null;
 
     // seuls les murs tuent. Les Puchitas méchantes retirent 0.5 cm.
-    if (!hasEffect('invincible') && S.obstacleSet.has(nk)) { die('obstacle', virusAt(nx, ny)); return; }
+    if (!hasEffect('invincible') && now() >= S.graceUntil && S.obstacleSet.has(nk)) {
+      die('obstacle', virusAt(nx, ny));
+      return;
+    }
 
     // rivaux / boss : seules les boules (dernier segment) sont vulnérables
     if (!hasEffect('invincible')) {

@@ -1,12 +1,12 @@
-const CACHE = 'zigouigoui-v24';
+const CACHE = 'zigouigoui-v25';
 const ASSETS = [
   './',
   './index.html',
-  './style.css?v=play24',
-  './js/audio.js?v=play24',
-  './js/data.js?v=play24',
-  './js/game.js?v=play24',
-  './js/main.js?v=play24',
+  './style.css?v=play25',
+  './js/audio.js?v=play25',
+  './js/data.js?v=play25',
+  './js/game.js?v=play25',
+  './js/main.js?v=play25',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -26,11 +26,12 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  const isNav = event.request.mode === 'navigate' || event.request.destination === 'document';
   event.respondWith(
-    caches.match(event.request).then(hit => hit || fetch(event.request).then(res => {
+    fetch(event.request).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(event.request, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => isNav ? caches.match('./index.html') : caches.match(event.request))
   );
 });

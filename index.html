@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=play24">
+<link rel="stylesheet" href="style.css?v=play25">
 </head>
 <body>
 <div id="app">
@@ -42,7 +42,7 @@
     <div id="screen-menu" class="screen">
       <h1 class="game-title">ZIGOUIGOUI</h1>
       <p class="tagline">En quête de sa Puchita 🐍💕</p>
-      <p class="tagline small">Version test • 📱 Swipe pour diriger</p>
+      <p class="tagline small">Version test • 📱 Croix ou swipe pour diriger</p>
       <canvas id="menu-hero" width="240" height="72" aria-hidden="true"></canvas>
       <div class="menu-buttons">
         <button class="btn big" id="btn-play">▶ JOUER</button>
@@ -52,7 +52,7 @@
       </div>
       <p class="best-line" id="menu-best">🏆 Meilleur score : 0</p>
       <p class="best-line small" id="menu-credits">💎 0 crédits</p>
-      <p class="controls-hint">⌨️ Flèches / ZQSD &nbsp;•&nbsp; 🎮 Manette &nbsp;•&nbsp; 📱 Swipe &nbsp;•&nbsp; Échap = Pause &nbsp;•&nbsp; M = Son</p>
+      <p class="controls-hint">⌨️ Flèches / ZQSD &nbsp;•&nbsp; 🎮 Manette &nbsp;•&nbsp; 📱 Croix / swipe &nbsp;•&nbsp; Pause &nbsp;•&nbsp; M = Son</p>
     </div>
 
     <!-- ===== SÉLECTION DE NIVEAU ===== -->
@@ -152,7 +152,15 @@
       <button id="btn-puchita" class="action-btn hidden" type="button" title="Appeler Puchita (H)">💕</button>
       <button id="btn-shoot" class="action-btn hidden" type="button" title="Tirer (Espace)">💦</button>
     </div>
-    <div id="play-hint" class="play-hint hidden">➡️ Flèches pour bouger · ramasse le bonus qui brille</div>
+    <div id="touch-pad" class="touch-pad hidden" aria-hidden="true">
+      <button type="button" class="pad-btn" data-dir="0,-1">▲</button>
+      <div class="pad-mid">
+        <button type="button" class="pad-btn" data-dir="-1,0">◀</button>
+        <button type="button" class="pad-btn" data-dir="1,0">▶</button>
+      </div>
+      <button type="button" class="pad-btn" data-dir="0,1">▼</button>
+    </div>
+    <button id="btn-pause-hud" class="pause-hud-btn hidden" type="button" title="Pause">⏸️</button>
     <button id="btn-mute" class="mute-btn" type="button" title="Couper le son (M)">🔊</button>
 
     <!-- Notif de déblocage de skin -->
@@ -161,10 +169,10 @@
   </div>
 
 </div>
-<script src="js/audio.js?v=play24"></script>
-<script src="js/data.js?v=play24"></script>
-<script src="js/game.js?v=play24"></script>
-<script src="js/main.js?v=play24"></script>
+<script src="js/audio.js?v=play25"></script>
+<script src="js/data.js?v=play25"></script>
+<script src="js/game.js?v=play25"></script>
+<script src="js/main.js?v=play25"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
