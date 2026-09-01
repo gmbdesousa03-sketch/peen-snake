@@ -611,4 +611,111 @@ body::after {
   .touch-pad { display: none !important; }
 }
 
+.ad-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 4, 20, .78);
+  padding: 16px;
+}
+.ad-layer.hidden { display: none; }
+.ad-card {
+  width: min(420px, 92%);
+  background: linear-gradient(180deg, #3a2460, #1a1028);
+  border: 3px solid rgba(255,255,255,.35);
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+.ad-kicker {
+  font-size: clamp(12px, 2cqi, 14px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .75;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ad-card h2 {
+  font-family: Bangers, "Fredoka", sans-serif;
+  font-size: clamp(26px, 5cqi, 36px);
+  letter-spacing: .04em;
+  margin: 0 0 8px;
+  color: var(--yellow);
+}
+.ad-card p {
+  font-size: clamp(13px, 2.1cqi, 16px);
+  line-height: 1.4;
+  opacity: .9;
+  margin: 0 0 12px;
+}
+.ad-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.15);
+  overflow: hidden;
+  margin: 8px 0 10px;
+}
+.ad-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ff6fa5, #ffd93d);
+  border-radius: 999px;
+  transition: width .08s linear;
+}
+#ad-timer {
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.ad-earn-btn {
+  margin: 4px auto 10px;
+  max-width: 360px;
+}
+
+.cine-screen {
+  padding: 0;
+  gap: 0;
+  justify-content: stretch;
+  align-items: stretch;
+  overflow: hidden;
+  background: #140810;
+  animation: none;
+}
+.cine-screen canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cine-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 16%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: min(92%, 540px);
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(16px, 3cqi, 26px);
+  line-height: 1.3;
+  color: #fff;
+  text-shadow: 0 2px 0 #1a0814, 0 8px 18px rgba(0, 0, 0, .55);
+  pointer-events: none;
+}
+.cine-skip {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  font-size: clamp(13px, 2cqi, 16px);
+  padding: 8px 16px;
+}
+
 

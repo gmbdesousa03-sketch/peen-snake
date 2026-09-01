@@ -483,6 +483,12 @@ const AudioMan = (() => {
       [0, 4, 7, 12, 7, 12, 16, 19, 24].forEach((s, i) =>
         blip(midi(60, s), 0.25, 'triangle', 0.4, ctx.currentTime + i * 0.13, masterGain));
     },
+    kiss() {
+      ensureCtx();
+      blip(midi(67, 4), 0.2, 'sine', 0.22, null, masterGain, midi(79, 7));
+      blip(midi(72, 7), 0.24, 'triangle', 0.2, ctx.currentTime + 0.07, masterGain);
+      noiseBurst(0.14, 0.14, ctx.currentTime + 0.16, 820, 'lowpass', masterGain);
+    },
     boing() { ensureCtx(); blip(200, 0.25, 'sine', 0.4, null, masterGain, 600); },
     shoot() { ensureCtx(); blip(280, 0.16, 'sine', 0.4, null, masterGain, 720); blip(520, 0.1, 'triangle', 0.2, ctx.currentTime + 0.04, masterGain, 180); },
     hit() {

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=play25">
+<link rel="stylesheet" href="style.css?v=play33">
 </head>
 <body>
 <div id="app">
@@ -65,7 +65,7 @@
     <!-- ===== SKINS ===== -->
     <div id="screen-skins" class="screen hidden">
       <h2 class="screen-title">Garde-robe du Zigouigoui</h2>
-      <p class="tagline small">Skins originaux, puis tous les drapeaux — Europe et grand monde.</p>
+      <p class="tagline small">Naturels libres. Or à 1000 pts, puis toute la garde-robe. Platine 1250 · Diamant 3000.</p>
       <div id="skin-carousel">
         <button id="skin-prev" class="skin-arrow" type="button" title="Skin précédent (←)">◀</button>
         <div class="skin-stage">
@@ -108,6 +108,7 @@
       <p class="best-line" id="shop-credits">💎 0 crédits</p>
       <p class="best-line small" id="shop-eaten">🍏 0 objets ramassés</p>
       <p class="best-line small hidden" id="shop-gain"></p>
+      <button id="btn-ad-credits" class="btn ad-earn-btn hidden" type="button">📺 +12 crédits (pub)</button>
       <div id="shop-grid"></div>
       <div class="menu-buttons">
         <button class="btn big hidden" id="btn-shop-next">➡ Niveau suivant</button>
@@ -133,15 +134,22 @@
       <p class="best-line" id="gameover-score">Score : 0</p>
       <p class="best-line small" id="gameover-record"></p>
       <div class="menu-buttons">
+        <button class="btn big hidden" id="btn-ad-continue" type="button">📺 Continuer (pub)</button>
         <button class="btn big" id="btn-replay">🔄 Rejouer</button>
         <button class="btn" id="btn-gameover-menu">🏠 Menu</button>
       </div>
     </div>
 
+    <div id="screen-cine" class="screen cine-screen hidden">
+      <canvas id="cine-canvas" width="896" height="640" aria-hidden="true"></canvas>
+      <p id="cine-caption" class="cine-caption"></p>
+      <button id="btn-cine-skip" class="btn cine-skip" type="button">Passer ▶</button>
+    </div>
+
     <!-- ===== VICTOIRE FINALE ===== -->
     <div id="screen-victory" class="screen hidden">
       <h2 class="screen-title rainbow-text">👑 VICTOIRE TOTALE 👑</h2>
-      <p class="tagline">Le zigouigoui a conquis tous les mondes,<br>jusqu’au Grand Corps. L'humanité ne s'en remettra jamais.</p>
+      <p class="tagline">Tu as retrouvé ta promise. Le zigouigoui peut s’endormir,<br>enfin. Ou presque.</p>
       <p class="best-line" id="victory-score">Score : 0</p>
       <div class="menu-buttons">
         <button class="btn big" id="btn-victory-menu">🏠 Menu principal</button>
@@ -165,14 +173,37 @@
 
     <!-- Notif de déblocage de skin -->
     <div id="toast" class="hidden"></div>
+
+    <div id="ad-consent" class="ad-layer hidden">
+      <div class="ad-card">
+        <p class="ad-kicker">💎 Soutenir le jeu</p>
+        <h2>Des pubs pour gagner de l’argent</h2>
+        <p>Plus tard, de vraies pubs (vidéo) pourront apparaître : continuer après un game over, ou gagner des crédits boutique. Tu peux dire non.</p>
+        <div class="menu-buttons">
+          <button class="btn big" id="ad-consent-yes" type="button">OK, c’est noté</button>
+          <button class="btn" id="ad-consent-no" type="button">Pas de pubs</button>
+        </div>
+      </div>
+    </div>
+    <div id="ad-layer" class="ad-layer hidden" aria-live="polite">
+      <div class="ad-card">
+        <p class="ad-kicker">📺 Pub partenaire</p>
+        <h2 id="ad-title">Un instant…</h2>
+        <p id="ad-copy">Cette pub aide à faire vivre Zigouigoui.</p>
+        <div class="ad-bar"><i id="ad-bar"></i></div>
+        <p id="ad-timer">6 s</p>
+        <button id="ad-skip" class="btn hidden" type="button">Passer</button>
+      </div>
+    </div>
   </div>
   </div>
 
 </div>
-<script src="js/audio.js?v=play25"></script>
-<script src="js/data.js?v=play25"></script>
-<script src="js/game.js?v=play25"></script>
-<script src="js/main.js?v=play25"></script>
+<script src="js/audio.js?v=play33"></script>
+<script src="js/data.js?v=play33"></script>
+<script src="js/ads.js?v=play33"></script>
+<script src="js/game.js?v=play33"></script>
+<script src="js/main.js?v=play33"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});

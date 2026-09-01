@@ -8,7 +8,7 @@
     menu: $('screen-menu'), levels: $('screen-levels'), skins: $('screen-skins'),
     boss: $('screen-boss'), shop: $('screen-shop'), unlock: $('screen-unlock'),
     pause: $('screen-pause'), gameover: $('screen-gameover'),
-    victory: $('screen-victory'),
+    cine: $('screen-cine'), victory: $('screen-victory'),
   };
   const hud = $('hud');
 
@@ -18,6 +18,9 @@
   let carriedScore = 0;
   let bossCarry = null;
   let shopAfterLevel = false;
+  let cineRaf = 0;
+  let cineDone = true;
+  let cineVictoryScore = 0;
 
   /* ================= NAVIGATION ÉCRANS ================= */
 
@@ -38,6 +41,16 @@
     if (pauseBtn) pauseBtn.classList.toggle('hidden', !playing);
   }
 
+  function syncAdButtons() {
+    const cont = $('btn-ad-continue');
+    const cred = $('btn-ad-credits');
+    if (cont) cont.classList.toggle('hidden', uiState !== 'gameover' || !AdsMan.canContinue());
+    if (cred) {
+      cred.classList.toggle('hidden', uiState !== 'shop' || !AdsMan.canCredits());
+      cred.textContent = `📺 +${AdsMan.CONFIG.creditsPerAd} crédits (pub)`;
+    }
+  }
+
   function show(name) {
     Object.values(screens).forEach(s => s.classList.add('hidden'));
     if (name && screens[name]) screens[name].classList.remove('hidden');
@@ -48,9 +61,11 @@
       $('btn-puchita').classList.add('hidden');
     }
     syncPlayControls();
+    syncAdButtons();
   }
 
   function toMenu() {
+    abortCinematic();
     Game.stop();
     Game.clearProgress();
     AudioMan.stopMusic();
@@ -189,6 +204,7 @@
     if (!cont) {
       carriedScore = 0;
       Game.clearProgress();
+      AdsMan.newRun();
     }
     beginLevelPlay(0);
   }
@@ -274,12 +290,71 @@
     Save.addCredits(gain);
     notifyUnlocks(unlocked);
     if (isLast) {
-      AudioMan.sfx.victory();
-      $('victory-score').textContent = `Score : ${score}  ·  💎 ${Save.data.credits} crédits`;
-      show('victory');
+      playEndingCinematic(score);
     } else {
       openShop({ afterLevel: true, gain, nextName: LEVELS[currentLevel + 1] });
     }
+  }
+
+  function abortCinematic() {
+    cineDone = true;
+    if (cineRaf) cancelAnimationFrame(cineRaf);
+    cineRaf = 0;
+    const cap = $('cine-caption');
+    if (cap) cap.textContent = '';
+  }
+
+  function finishCinematic() {
+    if (cineDone && uiState !== 'cine') return;
+    abortCinematic();
+    AudioMan.sfx.victory();
+    $('victory-score').textContent = `Score : ${cineVictoryScore}  ·  💎 ${Save.data.credits} crédits`;
+    show('victory');
+  }
+
+  function playEndingCinematic(score, forceDude) {
+    cineVictoryScore = score;
+    cineDone = false;
+    Game.stop();
+    AudioMan.stopMusic();
+    AudioMan.startMusic('menu');
+    const dude = forceDude === true || (forceDude !== false && Math.random() < 0.22);
+    const cap = $('cine-caption');
+    const lines = dude
+      ? [
+        [0.00, 'Au bout du Grand Corps…'],
+        [0.14, 'Ta promise t’attend.'],
+        [0.32, 'Il sourit. Bizarre.'],
+        [0.50, 'Jean-Miche s’approche…'],
+        [0.70, 'Attends. C’est pas elle.'],
+      ]
+      : [
+        [0.00, 'Au bout du Grand Corps…'],
+        [0.14, 'Ta Puchita t’attend.'],
+        [0.32, 'Elle sourit.'],
+        [0.50, 'Elle s’approche…'],
+        [0.70, 'Bouche ouverte. On y va ?'],
+      ];
+    show('cine');
+    const cv = $('cine-canvas');
+    const t0 = performance.now();
+    const DUR = 8600;
+    let kissed = false;
+    function tick(now) {
+      if (cineDone) return;
+      const u = Math.min(1, (now - t0) / DUR);
+      Game.drawEndingCine(cv, u, dude);
+      let text = lines[0][1];
+      for (const [at, line] of lines) if (u >= at) text = line;
+      if (cap) cap.textContent = text;
+      if (u > 0.56 && !kissed) {
+        kissed = true;
+        AudioMan.sfx.kiss();
+      }
+      if (u >= 1) finishCinematic();
+      else cineRaf = requestAnimationFrame(tick);
+    }
+    cineRaf = requestAnimationFrame(tick);
   }
 
   function openShop({ afterLevel, gain, nextName }) {
@@ -410,7 +485,20 @@
 
   function notifyUnlocks(skins) {
     if (!skins || !skins.length) return;
-    showToast(`🎭 Skin débloqué : ${skins.map(s => s.name).join(', ')} !`);
+    const openedGold = skins.some(s => s.id === 'or');
+    const prestige = skins.filter(s => s.prestige);
+    const other = skins.filter(s => !s.prestige && !s.id.startsWith('flag-') && !s.requiresGold);
+    const names = [];
+    if (openedGold) names.push('Skin Or + toute la garde-robe');
+    for (const s of prestige) {
+      if (s.id !== 'or') names.push(s.name);
+    }
+    for (const s of other) names.push(s.name);
+    if (!names.length) {
+      const first = skins.find(s => !s.id.startsWith('flag-')) || skins[0];
+      names.push(first.name);
+    }
+    showToast(`🎭 ${names.join(', ')} débloqué${names.length > 1 ? 's' : ''} !`);
     AudioMan.sfx.bonus();
   }
 
@@ -450,10 +538,16 @@
       c.restore();
     }
     $('skin-count').textContent = `${skinIndex + 1} / ${SKINS.length}`;
-    $('skin-name').textContent = locked ? '❓ ???' : skin.name;
-    $('skin-status').textContent = locked
-      ? `🔒 ${skin.unlock} pts cumulés pour le débloquer`
-      : (equipped ? '✅ Équipé' : ' ');
+    const gated = !!(skin.requiresGold && !Save.hasGoldSkin());
+    const showName = !locked || !!skin.prestige;
+    $('skin-name').textContent = showName ? skin.name : '❓ ???';
+    if (locked) {
+      $('skin-status').textContent = gated
+        ? `🔒 D’abord le Skin Or (${SKIN_GOLD_AT} pts)`
+        : `🔒 ${skin.unlock} pts cumulés pour le débloquer`;
+    } else {
+      $('skin-status').textContent = equipped ? '✅ Équipé' : ' ';
+    }
     $('skin-equip').classList.toggle('hidden', locked || equipped);
   }
 
@@ -495,7 +589,42 @@
   click('btn-shop-back', toMenu);
   click('btn-replay', () => startLevel(0));
   click('btn-gameover-menu', toMenu);
+  $('btn-ad-continue').addEventListener('click', async () => {
+    if (uiState !== 'gameover') return;
+    AudioMan.sfx.click();
+    const ok = await AdsMan.watchContinue();
+    if (!ok) {
+      showToast('Termine la pub pour continuer.');
+      syncAdButtons();
+      return;
+    }
+    const L = LEVELS[currentLevel];
+    applyWorldAura(L);
+    AudioMan.startMusic(L.music);
+    if (!Game.reviveFromAd()) {
+      startLevel(currentLevel);
+      return;
+    }
+    show(null);
+    refreshHud();
+    showToast('💛 Pub vue. T’es invincible quelques secondes.');
+  });
+  $('btn-ad-credits').addEventListener('click', async () => {
+    AudioMan.sfx.click();
+    const n = await AdsMan.watchCredits();
+    if (!n) {
+      showToast('Pas de crédits pour cette fois. Réessaie un peu plus tard.');
+      syncAdButtons();
+      return;
+    }
+    $('shop-credits').textContent = `💎 ${Save.data.credits} crédits`;
+    if ($('menu-credits')) $('menu-credits').textContent = `💎 ${Save.data.credits} crédits`;
+    buildShopGrid();
+    syncAdButtons();
+    showToast(`💎 +${n} crédits grâce à la pub !`);
+  });
   click('btn-victory-menu', toMenu);
+  click('btn-cine-skip', finishCinematic);
   click('btn-unlock-ok', dismissShopUnlock);
   $('btn-mute').addEventListener('click', e => {
     e.stopPropagation();
@@ -556,6 +685,7 @@
       return;
     }
     if (e.code === 'Escape' || e.code === 'KeyP') {
+      if (uiState === 'cine') { finishCinematic(); e.preventDefault(); return; }
       if (uiState === 'playing') pauseGame();
       else if (uiState === 'pause') resumeGame();
       else if (uiState === 'unlock') dismissShopUnlock();
@@ -588,6 +718,9 @@
     } else if ((e.code === 'Enter') && uiState === 'shop' && shopAfterLevel) {
       AudioMan.sfx.click();
       startLevel(currentLevel + 1, { continueRun: true });
+    } else if ((e.code === 'Enter' || e.code === 'Space') && uiState === 'cine') {
+      finishCinematic();
+      e.preventDefault();
     }
   });
 
@@ -634,6 +767,8 @@
       else if (justPressed(1)) { AudioMan.sfx.click(); toMenu(); }
     } else if (uiState === 'menu') {
       if (justPressed(0)) { AudioMan.sfx.click(); startLevel(0); } // A = jouer
+    } else if (uiState === 'cine') {
+      if (justPressed(0) || justPressed(1) || justPressed(9)) finishCinematic();
     } else if (uiState === 'victory') {
       if (justPressed(0)) { AudioMan.sfx.click(); toMenu(); }
     }
@@ -671,7 +806,14 @@
     if (uiState === 'menu') AudioMan.startMusic('menu');
   }, { once: true });
 
+  AdsMan.onConsent = () => syncAdButtons();
+  AdsMan.init();
   AudioMan.setMuted(!!Save.data.muted);
   syncMuteBtn();
   toMenu();
+  const cineQ = new URLSearchParams(location.search).get('cine');
+  if (cineQ === '1' || cineQ === 'dude' || cineQ === 'puchita') {
+    const force = cineQ === 'dude' ? true : cineQ === 'puchita' ? false : undefined;
+    setTimeout(() => playEndingCinematic(Save.data.best || 0, force), 250);
+  }
 })();

@@ -220,33 +220,28 @@ const LEVELS = [
   },
   {
     id: 6, name: 'Cuisine', emoji: '🍳', food: '🥐',
-    music: 'kitchen', speed: 7.2, goal: 620,
+    music: 'kitchen', speed: 6.4, goal: 500,
     bg: ['#f3d9a4', '#e8c078'], deco: 'kitchen',
     soul: 'Fournaise grasse',
     mood: 'Huile chaude, couteaux, chef en furie. Ça sent le beurre et la vengeance.',
     aura: '#e8a040', vig: 'rgba(90, 40, 8, .40)',
     obstacles: [
-      ...wallH(6, 12, 3, 'wood'),
-      ...wallH(16, 22, 3, 'wood'),
-      ...wallH(10, 12, 8, 'wood'),
-      ...wallH(15, 17, 8, 'wood'),
-      ...wallH(10, 17, 10, 'wood'),
-      ...wallV(25, 4, 9, 'wood'),
-      ...wallH(24, 25, 4, 'wood'),
-      ...wallH(2, 6, 13, 'wood'),
-      ...wallV(2, 13, 15, 'wood'),
-      ...wallH(20, 23, 14, 'wood'),
+      ...wallH(6, 11, 3, 'wood'),
+      ...wallH(17, 22, 3, 'wood'),
+      ...wallH(11, 12, 8, 'wood'),
+      ...wallH(15, 16, 8, 'wood'),
+      ...wallV(25, 5, 8, 'wood'),
+      ...wallH(2, 5, 13, 'wood'),
       { x: 8, y: 2, e: '🍳' }, { x: 19, y: 2, e: '🥘' },
       { x: 13, y: 9, e: '🥖' },
       { x: 24, y: 6, e: '🔪' }, { x: 15, y: 17, e: '🧄' },
       { x: 1, y: 3, e: '🧂' }, { x: 22, y: 13, e: '🍅' },
-      virus(10, 5, 0), virus(20, 5, 1), virus(7, 14, 2), virus(18, 14, 0),
-      virus(4, 7, 1), virus(14, 12, 2),
-      virus(16, 7, 1, { axis: 'x', min: 12, max: 22, dir: 1, every: 4 }),
-      virus(5, 8, 0, { axis: 'y', min: 4, max: 12, dir: 1, every: 5 }),
-      virus(22, 10, 2, { axis: 'y', min: 6, max: 14, dir: -1, every: 4 }),
+      virus(10, 5, 0), virus(20, 5, 1), virus(7, 14, 2),
+      virus(4, 7, 1),
+      virus(16, 7, 1, { axis: 'x', min: 13, max: 21, dir: 1, every: 6 }),
+      virus(22, 10, 2, { axis: 'y', min: 6, max: 14, dir: -1, every: 6 }),
     ],
-    rivals: 6, rivalSpeed: 1.02, rivalSmart: 0.78,
+    rivals: 3, rivalSpeed: 1.22, rivalSmart: 0.48,
   },
   {
     id: 7, name: 'Sauna', emoji: '🧖', food: '🧴',
@@ -358,7 +353,7 @@ const BOSSES = [
     hp: 5, length: 12, speedMul: 0.90, smart: 0.82, emoji: '👽',
     skin: { body: '#7cff6b', head: '#4ad89a', tip: '#d4ff4a', detail: null } },
   { name: 'Chef Gros-Bras', taunt: 'Hors de MA cuisine, saucisse crue.',
-    hp: 6, length: 12, speedMul: 0.94, smart: 0.78, emoji: '👨‍🍳',
+    hp: 6, length: 10, speedMul: 1.10, smart: 0.52, emoji: '👨‍🍳',
     skin: { body: '#e8d8c0', head: '#d4c4a8', tip: '#c45c3a', detail: null } },
   { name: 'Sven la Serviette', taunt: 'Trop habillé pour le sauna. Honte à toi.',
     hp: 7, length: 13, speedMul: 0.88, smart: 0.86, emoji: '🧖‍♂️',
@@ -379,10 +374,14 @@ const RIVAL_SKINS = [
 ];
 
 /* ---- SKINS (déblocage au score cumulé + drapeaux) ---- */
+const SKIN_GOLD_AT = 1000;
+const SKIN_PLAT_AT = 1250;
+const SKIN_DIAMOND_AT = 3000;
+
 /* opts : { head, tip, orient ('v' = bandes verticales, 'h' = horizontales), bg, emblem: [type, ...couleurs] } */
 function flagSkin(id, name, emoji, stripes, opts = {}) {
   return {
-    id: 'flag-' + id, name: `${emoji} ${name}`, emoji, unlock: 0,
+    id: 'flag-' + id, name: `${emoji} ${name}`, emoji, unlock: 0, requiresGold: true,
     body: stripes[Math.min(1, stripes.length - 1)],
     head: opts.head || stripes[0],
     tip: opts.tip || stripes[stripes.length - 1],
@@ -404,14 +403,26 @@ const SKINS = [
     body: '#6b4632', head: '#59392a', tip: '#7d4a3e', sack: '#5a3a2a', detail: 'realistic' },
   { id: 'classic', name: 'Le Classique', unlock: 0,
     body: '#f7a8c0', head: '#f791b4', tip: '#e26a97', detail: null },
-  { id: 'banana',  name: 'Banane Royale', unlock: 150,
+  { id: 'bubu', name: 'BuBu', unlock: 0,
+    body: '#ff4f9a', head: '#ff8ab8', tip: '#e31c79', sack: '#e45a96',
+    detail: 'metal', sheen: 'rgba(255, 200, 225, .92)', glow: '#ff7eb3' },
+  { id: 'banana',  name: 'Banane Royale', unlock: 150, requiresGold: true,
     body: '#ffe135', head: '#ffd21f', tip: '#c99e00', detail: null },
-  { id: 'cactus',  name: 'Cactus Câlin', unlock: 400,
+  { id: 'cactus',  name: 'Cactus Câlin', unlock: 400, requiresGold: true,
     body: '#7bc86c', head: '#67b859', tip: '#4e9a42', detail: 'spikes' },
-  { id: 'robot',   name: 'Robo-Zizi 3000', unlock: 800,
+  { id: 'robot',   name: 'Robo-Zizi 3000', unlock: 800, requiresGold: true,
     body: '#b8c4cc', head: '#a5b3bd', tip: '#7f8f9a', detail: 'antenna' },
-  { id: 'rainbow', name: 'Arc-en-ciel Fabuleux', unlock: 1500,
+  { id: 'or', name: 'Skin Or', unlock: SKIN_GOLD_AT, prestige: 'or',
+    body: '#ffd24a', head: '#ffe98a', tip: '#fff8d4', sack: '#e0b020',
+    detail: 'metal', sheen: 'rgba(255, 248, 190, .85)', glow: '#ffe066' },
+  { id: 'platine', name: 'Skin Platine', unlock: SKIN_PLAT_AT, prestige: 'platine',
+    body: '#e8eef6', head: '#ffffff', tip: '#c5d4e8', sack: '#b4c0d0',
+    detail: 'metal', sheen: 'rgba(255, 255, 255, .9)', glow: '#e8f4ff' },
+  { id: 'rainbow', name: 'Arc-en-ciel Fabuleux', unlock: 1500, requiresGold: true,
     body: null, head: null, tip: null, detail: 'rainbow' },
+  { id: 'diamant', name: 'Skin Diamant', unlock: SKIN_DIAMOND_AT, prestige: 'diamant',
+    body: '#b8f6ff', head: '#ffffff', tip: '#7aecff', sack: '#8fd4ea',
+    detail: 'diamond', sheen: 'rgba(255,255,255,.95)', glow: '#9af4ff' },
 
   /* Europe */
   flagSkin('fr', 'France', '🇫🇷', ['#002395', '#ffffff', '#ed2939'], { orient: 'v' }),
@@ -513,6 +524,10 @@ const Save = {
     best: 0, totalScore: 0, unlockedLevel: 9, skin: 'naturel',
     credits: 0, eatenTotal: 0, unlockedShop: [], muted: false,
     kit: { capote: 0, sperm: 0, antigrav: 0, pump: 0, puchita: 0 },
+    ads: {
+      consent: null, impressions: 0, rewards: 0, estimatedCents: 0,
+      lastCreditAt: 0, creditsToday: 0, creditsDay: '',
+    },
   },
   load() {
     try {
@@ -520,6 +535,10 @@ const Save = {
       if (raw) Object.assign(this.data, JSON.parse(raw));
     } catch (e) { /* sauvegarde corrompue : on repart de zéro */ }
     if (this.data.credits == null) this.data.credits = 0;
+    this.data.ads = Object.assign({
+      consent: null, impressions: 0, rewards: 0, estimatedCents: 0,
+      lastCreditAt: 0, creditsToday: 0, creditsDay: '',
+    }, this.data.ads || {});
     if (this.data.eatenTotal == null) this.data.eatenTotal = 0;
     if (this.data.muted == null) this.data.muted = false;
     this.data.kit = Object.assign(
@@ -537,6 +556,8 @@ const Save = {
         if (!this.data.unlockedShop.includes(id)) this.data.unlockedShop.push(id);
       }
     }
+    const cur = SKINS.find(s => s.id === this.data.skin);
+    if (cur && !this.isSkinUnlocked(cur)) this.data.skin = 'naturel';
   },
   write() {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); } catch (e) {}
@@ -566,7 +587,7 @@ const Save = {
     this.data.totalScore += score;
     if (score > this.data.best) this.data.best = score;
     for (const s of SKINS) {
-      if (s.unlock > 0 && before < s.unlock && this.data.totalScore >= s.unlock) newlyUnlocked.push(s);
+      if (!this.isSkinUnlocked(s, before) && this.isSkinUnlocked(s)) newlyUnlocked.push(s);
     }
     this.write();
     return newlyUnlocked;
@@ -574,7 +595,15 @@ const Save = {
   unlockLevel(id) {
     if (id > this.data.unlockedLevel) { this.data.unlockedLevel = id; this.write(); }
   },
-  isSkinUnlocked(skin) { return this.data.totalScore >= skin.unlock; },
+  hasGoldSkin(score) {
+    return (score != null ? score : this.data.totalScore) >= SKIN_GOLD_AT;
+  },
+  isSkinUnlocked(skin, score) {
+    const pts = score != null ? score : this.data.totalScore;
+    if ((skin.unlock || 0) > pts) return false;
+    if (skin.requiresGold && pts < SKIN_GOLD_AT) return false;
+    return true;
+  },
   isShopUnlocked(id) { return (this.data.unlockedShop || []).includes(id); },
   addEaten(n) {
     this.data.eatenTotal = (this.data.eatenTotal || 0) + (n || 1);
